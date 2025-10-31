@@ -23,6 +23,7 @@ $currentUser = $auth->getCurrentUser();
 
     * { box-sizing: border-box; }
     html, body { height: 100%; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
@@ -54,22 +55,24 @@ $currentUser = $auth->getCurrentUser();
     .brand .isk { font-weight:800; }
     .brand .print { font-weight:800; }
     .brand .star { display:inline-flex; align-items:center; margin-left:-8px; position: relative; top: 1px; }
-    .brand .star img { width:22px; height:22px; display:block; border-radius: 2px; vertical-align: middle; }
+    .brand .star img { width:22px; height:22px; display:block; border-radius: 2px; }
     .brand .print { margin-left:-6px; }
     .brand .print { margin-left:-6px; }
 
     .tabs { 
       display: inline-flex; 
-      gap: 8px; 
+      gap: 10px; 
       flex: 1; 
       justify-content: center; 
       flex-wrap: wrap;
     }
     .tab {
-      padding: 13px 30px; background: transparent; color: #222; text-decoration: none; font-size: 14px; border-radius: 2px;
-      border: 1px solid transparent; transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+      padding: 12px 22px; background: transparent; color: #222; text-decoration: none; font-size: 14px; border-radius: 8px;
+      border: 1px solid transparent; transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
     }
-    .tab:hover { background: var(--maroon); color: #fff; border-color: var(--maroon); border-radius: 0; box-shadow: 0 10px 0 var(--maroon), 0 -10px 0 var(--maroon); }
+    .tab:hover { background: rgba(117,13,13,0.08); color: var(--maroon); border-color: rgba(117,13,13,0.25); transform: translateY(-1px); }
+    /* Active tab matches hover pill style */
+    .tab.active { background: rgba(117,13,13,0.08); color: var(--maroon); border-color: rgba(117,13,13,0.25); transform: translateY(-1px); }
 
     .user-icon { 
       width: 40px; 
@@ -334,7 +337,7 @@ $currentUser = $auth->getCurrentUser();
     /* Slideshow Styles */
     .slideshow-container {
       position: relative;
-      height: 280px;
+      height: 420px;
       border: none;
       border-radius: 0;
       box-shadow: none;
@@ -390,14 +393,14 @@ $currentUser = $auth->getCurrentUser();
       top: 50%;
       width: auto;
       margin-top: -22px;
-      padding: 16px;
+      padding: 10px 12px;
       color: white;
       font-weight: bold;
-      font-size: 18px;
-      transition: 0.6s ease;
-      border-radius: 0 3px 3px 0;
+      font-size: 16px;
+      transition: background-color .2s ease, transform .2s ease;
+      border-radius: 999px;
       user-select: none;
-      background: rgba(0,0,0,0.3);
+      background: rgba(0,0,0,0.35);
       border: none;
     }
 
@@ -407,7 +410,8 @@ $currentUser = $auth->getCurrentUser();
     }
 
     .prev:hover, .next:hover {
-      background-color: rgba(0,0,0,0.8);
+      background-color: rgba(0,0,0,0.6);
+      transform: scale(1.05);
     }
 
     /* Dots indicator */
@@ -421,17 +425,18 @@ $currentUser = $auth->getCurrentUser();
 
     .dot {
       cursor: pointer;
-      height: 8px;
-      width: 8px;
-      margin: 0 3px;
+      height: 10px;
+      width: 10px;
+      margin: 0 4px;
       background-color: rgba(255,255,255,0.5);
       border-radius: 50%;
       display: inline-block;
-      transition: background-color 0.6s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
     .dot.active, .dot:hover {
       background-color: white;
+      transform: scale(1.1);
     }
 
     /* Fade animation */
@@ -445,46 +450,48 @@ $currentUser = $auth->getCurrentUser();
       to {opacity: 1}
     }
 
-    .section { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    .section { max-width: 1100px; margin: 0 auto; padding: 56px 20px; }
 
     .services { text-align: center; }
-    .services h2 { margin: 8px 0 18px; letter-spacing: 1px; }
-    .service-grid { display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 16px; }
+    .services h2 { margin: 10px 0 22px; letter-spacing: 1px; }
+    .service-grid { display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 20px; }
     .service {
-      height: 84px; display:grid; place-items:center; color:#801414; background: transparent;
+      height: 96px; display:grid; place-items:center; color: var(--maroon); background: #fff; border: 1px solid #eee; border-radius: 10px;
+      transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
     }
-    .service:hover { background: var(--maroon); color:#fff; }
-    .service > div { font-size: 44px; }
-    .service i { font-size: 44px; line-height: 1; display:block; }
-    .service small { display:block; margin-top: 6px; font-size: 11px; color:#801414; }
+    .service:hover { background: var(--maroon); color:#fff; transform: translateY(-3px); box-shadow: 0 8px 18px rgba(117,13,13,0.25); }
+    .service > div { font-size: 42px; }
+    .service i { font-size: 42px; line-height: 1; display:block; }
+    .service small { display:block; margin-top: 6px; font-size: 12px; color: var(--maroon); letter-spacing: .2px; }
     .service:hover small { color:#fff; }
 
-    .about-band { background: var(--maroon); color: #fff; }
-    .about { max-width: 1100px; margin: 0 auto; padding: 24px 16px 28px; }
-    .about h3 { margin: 0 0 10px; letter-spacing: 0.6px; }
-    .about p { margin: 0; max-width: 880px; line-height: 1.5; font-size: 14px; }
+    .about-band { background: var(--maroon); color: #fff; margin-top: 96px; }
+    .about { max-width: 1100px; margin: 0 auto; padding: 36px 18px 40px; }
+    .about h3 { margin: 0 0 12px; letter-spacing: 0.6px; }
+    .about p { margin: 0; max-width: 920px; line-height: 1.7; font-size: 15px; }
 
-    .contact { padding: 28px 16px 44px; }
+    .contact { padding: 72px 18px 88px; margin-top: 96px; }
     .contact h3 { margin: 0 0 18px; text-align: center; font-size: 24px; color: var(--maroon); }
     .contact-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 22px; max-width:1100px; margin:0 auto; }
     .contact-card { 
       background:#fff; 
       border:1px solid #eee; 
-      border-radius: 8px; 
-      padding: 20px; 
+      border-radius: 12px; 
+      padding: 24px; 
       min-height: 120px; 
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color .2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
     }
     .contact-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+      border-color: rgba(117,13,13,0.35);
     }
     .contact h4 {
       margin: 0 0 12px 0;
@@ -504,11 +511,17 @@ $currentUser = $auth->getCurrentUser();
     }
 
     .contact-icon {
-      font-size: 40px;
+      font-size: 42px;
       color: var(--maroon);
       margin-bottom: 4px;
       display: block;
+      transition: transform .2s ease;
     }
+    .contact-card:hover .contact-icon { transform: scale(1.05); }
+
+    /* Reveal on scroll */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
 
     /* Auth Modal */
     .modal-overlay {
@@ -533,8 +546,49 @@ $currentUser = $auth->getCurrentUser();
     .btn-secondary { background: #f4f4f6; color:#333; border-color:#e5e7eb; }
     .btn:hover { filter: brightness(0.95); }
 
+    /* New: Features, Steps, Pricing, Testimonials, Footer (refined) */
+    .glass { background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.35); box-shadow:0 12px 30px rgba(17,17,17,.08); }
+    .band { background:#fff; }
+    .features { max-width:1100px; margin:88px auto; padding:24px; }
+    .section-title { margin:0 0 18px; color:var(--maroon); letter-spacing:.6px; text-align:center; font-size:26px; }
+    .section-sub { margin:-8px 0 22px; text-align:center; color:#666; font-size:14px; }
+    .features-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:24px; }
+    .feature { border:0; border-radius:16px; padding:24px; text-align:center; transition: transform .2s ease, box-shadow .2s ease; }
+    .feature:hover { transform: translateY(-4px); box-shadow:0 18px 40px rgba(17,17,17,.12); }
+    .feature i { font-size:26px; color: #fff; background: var(--maroon); width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; margin-bottom:10px; }
+    .feature h4 { margin:6px 0 6px; font-size:15px; }
+    .feature p { margin:0; color:#555; font-size:13px; }
+
+    .steps { max-width:1100px; margin:92px auto; padding:0 20px; }
+    .steps-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:24px; counter-reset: step; align-items:stretch; }
+    .step { border:0; border-radius:16px; padding:24px 20px; text-align:center; position:relative; }
+    .step::before { counter-increment: step; content: counter(step); position:absolute; top:-14px; left:18px; width:30px; height:30px; background: var(--maroon); color:#fff; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:700; box-shadow:0 6px 14px rgba(117,13,13,.25); }
+    .step:not(:last-child)::after { content:""; position:absolute; top:1px; right:-9px; width:18px; height:18px; border-right:2px solid rgba(117,13,13,.25); border-top:2px solid rgba(117,13,13,.25); transform: rotate(45deg); }
+    .step h4 { margin:6px 0; font-size:15px; }
+    .step p { margin:0; color:#555; font-size:13px; }
+
+    .pricing { max-width:1100px; margin:100px auto; padding:0 20px; }
+    .price-table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:0; border-radius:16px; }
+    .price-table th, .price-table td { padding:14px 16px; text-align:left; border-bottom:1px solid #f5f5f7; }
+    .price-table th { background: rgba(255,255,255,0.75); color:#333; }
+    .price-table tr:last-child td { border-bottom:0; }
+    .tag { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(117,13,13,.25); color: var(--maroon); background:#fff; }
+
+    .testimonials { max-width:1100px; margin:96px auto; padding:0 20px; }
+    .t-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px; }
+    .t { border:0; border-radius:16px; padding:24px; }
+    .t p { margin:0 0 8px; color:#444; line-height:1.6; }
+    .t small { color:#666; font-weight:600; }
+
+    .footer { background:#0f0f0f; color:#ddd; margin-top:40px; }
+    .footer-inner { max-width:1100px; margin:0 auto; padding:28px 18px; display:grid; grid-template-columns: 2fr 1fr 1fr; gap:18px; }
+    .footer h4 { margin:0 0 10px; color:#fff; }
+    .footer a { color:#ddd; text-decoration:none; }
+    .footer a:hover { text-decoration:underline; }
+    .copyright { text-align:center; color:#999; padding:12px 18px 22px; font-size:13px; }
+
     @media (max-width: 900px) {
-      .service-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .service-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
       .contact-grid { grid-template-columns: 1fr; }
       .nav { 
         flex-direction: column; 
@@ -549,6 +603,10 @@ $currentUser = $auth->getCurrentUser();
         padding: 10px 16px; 
         font-size: 13px; 
       }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .t-grid { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr; }
     }
     
     @media (max-width: 600px) {
@@ -596,6 +654,7 @@ $currentUser = $auth->getCurrentUser();
     <section class="hero">
       <div class="hero-inner">
         <div class="slideshow-container">
+          <button class="prev" onclick="changeSlide(-1)" aria-label="Previous slide">&#10094;</button>
           <div class="slide active">
             <img src="assets/slide_pic_1.jpg" alt="Photo printing and display services" />
             <div class="slide-content">
@@ -624,6 +683,7 @@ $currentUser = $auth->getCurrentUser();
               <p>Professional document and photo lamination</p>
             </div>
           </div>
+          <button class="next" onclick="changeSlide(1)" aria-label="Next slide">&#10095;</button>
           
           
           <!-- Dots indicator -->
@@ -649,38 +709,121 @@ $currentUser = $auth->getCurrentUser();
       </div>
     </section>
 
+    <section class="band">
+      <div class="features">
+        <h3 class="section-title">Why choose Isk⭐Print?</h3>
+        <div class="section-sub">Modern output, simple ordering, and campus‑friendly rates</div>
+        <div class="features-grid">
+          <div class="feature glass">
+            <i class="fas fa-bolt"></i>
+            <h4>Fast Turnaround</h4>
+            <p>Same‑day options for most document jobs.</p>
+          </div>
+          <div class="feature glass">
+            <i class="fas fa-shield-alt"></i>
+            <h4>Secure Handling</h4>
+            <p>Your files are handled with privacy in mind.</p>
+          </div>
+          <div class="feature glass">
+            <i class="fas fa-ribbon"></i>
+            <h4>Shop‑Grade Quality</h4>
+            <p>Sharp text, accurate colors, durable finishes.</p>
+          </div>
+          <div class="feature glass">
+            <i class="fas fa-tags"></i>
+            <h4>Student Pricing</h4>
+            <p>Campus‑friendly rates across all services.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="steps">
+      <h3 class="section-title">How it works</h3>
+      <div class="steps-grid">
+        <div class="step glass"><h4>Choose a Service</h4><p>Select print, bind, laminate, photos, copy, or tarpaulin.</p></div>
+        <div class="step glass"><h4>Upload Files</h4><p>Attach documents or images right from your device.</p></div>
+        <div class="step glass"><h4>Set Options</h4><p>Pick paper, size, color, copies, margins, and more.</p></div>
+        <div class="step glass"><h4>Send & Pay</h4><p>Submit to admin; settle payment from your account.</p></div>
+      </div>
+    </section>
+
+    <section class="pricing">
+      <h3 class="section-title">Quick pricing snapshot</h3>
+      <table class="price-table glass">
+        <thead>
+          <tr><th>Service</th><th>Includes</th><th>Rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Print</td><td>Standard document printing</td><td><span class="tag">from ₱60</span></td></tr>
+          <tr><td>Book Bind</td><td>Thermal/soft bind</td><td><span class="tag">from ₱120</span></td></tr>
+          <tr><td>Lamination</td><td>ID/photos/documents</td><td><span class="tag">from ₱40</span></td></tr>
+          <tr><td>Pictures</td><td>Glossy photo prints</td><td><span class="tag">from ₱25</span></td></tr>
+          <tr><td>Photocopy</td><td>Black & white copies</td><td><span class="tag">from ₱10</span></td></tr>
+          <tr><td>Tarpaulin</td><td>Large‑format print</td><td><span class="tag">from ₱200</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
     <section id="about" class="about-band">
-      <div class="about">
+      <div class="about reveal" data-delay="0">
         <h3>ABOUT US:</h3>
         <p>
-        Welcome to Isk⭐Print, your trusted partner for all things print.
-        We specialize in providing high-quality, professional printing services with the ease and convenience of online ordering.
-        From business cards and brochures to banners and custom apparel,
-        we're dedicated to helping you bring your ideas to life with exceptional quality and attention to detail.
+        At Isk⭐Print, we help students, faculty, and local businesses turn files into professional, ready-to-use materials—fast. 
+        Our shop combines campus-friendly pricing with commercial-grade output so you get sharp text, accurate colors, and durable finishes every time.
         </p>
+        <p style="margin-top:10px">
+        We offer streamlined online ordering, secure file handling, and expert guidance on paper, layout, and finishing.
+        Whether you need class handouts, reports, IDs, posters, tarpaulins, or photo displays, we’ll ensure your print looks polished and on-brand.
+        </p>
+      </div>
+    </section>
+
+    <section class="testimonials">
+      <h3 class="section-title">What students say</h3>
+      <div class="t-grid">
+        <div class="t glass"><p>Super bilis! Nakapag‑print ako ng report same day. Quality is great.</p><small>— Alyssa, BSIT</small></div>
+        <div class="t glass"><p>Tarpaulin for our org event came out crisp and on‑brand. Salamat!</p><small>— Ken, BSEntrep</small></div>
+        <div class="t glass"><p>Affordable rates and friendly staff. The lamination saved my ID.</p><small>— Mei, BSA</small></div>
       </div>
     </section>
 
     <section id="contact" class="contact">
       <h3>CONTACT</h3>
       <div class="contact-grid">
-        <div class="contact-card">
+        <div class="contact-card reveal" data-delay="0">
           <i class="fab fa-facebook-square contact-icon" aria-hidden="true"></i>
           <a href="https://facebook.com/IskoPrintOfficial" target="_blank" aria-label="Facebook">
             facebook.com/IskoPrintOfficial
           </a>
         </div>
-        <div class="contact-card">
+        <div class="contact-card reveal" data-delay="100">
           <i class="fab fa-instagram contact-icon" aria-hidden="true"></i>
           <a href="https://instagram.com/iskoprint_official" target="_blank" aria-label="Instagram">
             @iskoprint_official
           </a>
         </div>
-        <div class="contact-card">
+        <div class="contact-card reveal" data-delay="200">
           <i class="fab fa-telegram-plane contact-icon" aria-hidden="true"></i>
           <a href="https://t.me/IskoPrintOfficial" target="_blank" aria-label="Telegram">
             t.me/IskoPrintOfficial
           </a>
+        </div>
+        <div class="contact-card reveal" data-delay="300">
+          <i class="fas fa-phone contact-icon" aria-hidden="true"></i>
+          <div>+63 900 123 4567</div>
+          <small style="color:#666">Mon–Sat, 9:00 AM – 6:00 PM</small>
+        </div>
+        <div class="contact-card reveal" data-delay="400">
+          <i class="fas fa-envelope contact-icon" aria-hidden="true"></i>
+          <a href="mailto:support@iskoprint.com" aria-label="Email">
+            support@iskoprint.com
+          </a>
+        </div>
+        <div class="contact-card reveal" data-delay="500">
+          <i class="fas fa-map-marker-alt contact-icon" aria-hidden="true"></i>
+          <div>PUP Sto. Tomas Campus</div>
+          <small style="color:#666">Ground floor, Student Services Center</small>
         </div>
       </div>
     </section>
@@ -735,54 +878,23 @@ $currentUser = $auth->getCurrentUser();
     <div class="sidebar-content">
       <div class="sidebar-section" data-auth="true">
         <h3>Payment</h3>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
+        <div class="sidebar-item" onclick="setActiveItem(this); navigate('payment_methods.php')" onmouseenter="setActiveItem(this)">
           <i class="fas fa-credit-card"></i>
           <span>Payment Methods</span>
         </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
+        <div class="sidebar-item" onclick="setActiveItem(this); navigate('billing_history.php')" onmouseenter="setActiveItem(this)">
           <i class="fas fa-receipt"></i>
           <span>Billing History</span>
         </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
+        <div class="sidebar-item" onclick="setActiveItem(this); navigate('invoices.php')" onmouseenter="setActiveItem(this)">
           <i class="fas fa-file-invoice"></i>
           <span>Invoices</span>
         </div>
       </div>
       
+      <!-- Removed Printer Settings section -->
       <div class="sidebar-section" data-auth="true">
-        <h3>Printer Settings</h3>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-file-alt"></i>
-          <span>Pages to Print</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-copy"></i>
-          <span>Copies</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-th-large"></i>
-          <span>Layout</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-file"></i>
-          <span>Paper Size</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-ruler-combined"></i>
-          <span>Margins</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-palette"></i>
-          <span>Color Options</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-expand-arrows-alt"></i>
-          <span>Scale / Fit to Page</span>
-        </div>
-        <div class="sidebar-item" onclick="setActiveItem(this)" onmouseenter="setActiveItem(this)">
-          <i class="fas fa-retweet"></i>
-          <span>Duplex Printing</span>
-        </div>
+        <h3>Account</h3>
         <div class="sidebar-item logout-item" onclick="logout()">
           <i class="fas fa-sign-out-alt"></i>
           <span>Logout</span>
@@ -791,8 +903,26 @@ $currentUser = $auth->getCurrentUser();
     </div>
   </div>
 
-  <footer class="section" style="text-align:center">
-    <!-- Printer Mail Console functionality moved to printer icon -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <h4>Isk⭐Print</h4>
+        <p style="margin:0; color:#cfcfcf">Reliable campus printing for documents, photos, IDs, and large‑format jobs.</p>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <div><a href="#services">Print & Copy</a></div>
+        <div><a href="#services">Binding & Lamination</a></div>
+        <div><a href="#services">Photos & Tarpaulin</a></div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div><a href="#contact">Facebook</a></div>
+        <div><a href="#contact">Instagram</a></div>
+        <div><a href="#contact">Telegram</a></div>
+      </div>
+    </div>
+    <div class="copyright">© <?php echo date('Y'); ?> Isk⭐Print. All rights reserved.</div>
   </footer>
 
   <script>
@@ -920,6 +1050,15 @@ $currentUser = $auth->getCurrentUser();
       clickedItem.classList.add('active');
     }
 
+    function navigate(url) {
+      if (!isSignedIn()) {
+        openAuthModal();
+        return;
+      }
+      closeSidebar();
+      window.location.href = url;
+    }
+
     function updateAuthUI() {
       const signedIn = isSignedIn();
       if (!signedIn) {
@@ -956,5 +1095,63 @@ $currentUser = $auth->getCurrentUser();
       const slideshowContainer = document.querySelector('.slideshow-container');
       slideshowContainer.addEventListener('mouseenter', pauseSlideshow);
       slideshowContainer.addEventListener('mouseleave', resumeSlideshow);
+
+      // Smooth anchor scrolling and scrollspy active state
+      const tabs = document.querySelectorAll('.tabs .tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      const sections = [
+        document.querySelector('#home'),
+        document.querySelector('#services'),
+        document.querySelector('#about'),
+        document.querySelector('#contact')
+      ].filter(Boolean);
+      function setActiveTabOnScroll() {
+        let currentId = 'home';
+        const scrollPos = window.scrollY + 120; // offset under top area
+        sections.forEach(sec => {
+          if (sec.offsetTop <= scrollPos) currentId = sec.id;
+        });
+        tabs.forEach(t => {
+          t.classList.toggle('active', t.getAttribute('href') === '#' + currentId);
+        });
+      }
+      window.addEventListener('scroll', setActiveTabOnScroll, { passive: true });
+      setActiveTabOnScroll();
+
+      // Reveal on scroll using IntersectionObserver
+      const revealEls = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const delay = parseInt(el.getAttribute('data-delay') || '0', 10);
+            if (delay) {
+              el.style.transitionDelay = delay + 'ms';
+            }
+            el.classList.add('visible');
+            io.unobserve(el);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+      revealEls.forEach(el => io.observe(el));
+
+      // Tag key elements for reveal if not already marked
+      document.querySelectorAll('.service, .contact-card').forEach((el, idx) => {
+        if (!el.classList.contains('reveal')) {
+          el.classList.add('reveal');
+          el.setAttribute('data-delay', (idx % 6) * 70);
+          io.observe(el);
+        }
+      });
     });
   </script>

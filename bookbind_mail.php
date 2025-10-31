@@ -7,6 +7,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BookBinder Mail UI</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
   <style>
     :root {
       --paper: #fffef8;
@@ -381,6 +383,24 @@
       padding: 0; margin: -1px; overflow: hidden;
       clip: rect(0, 0, 1px, 1px); white-space: nowrap; border: 0;
     }
+    /* Live Preview Editor */
+    .editor { padding: 14px 18px 22px; border-bottom: 1px dashed var(--line); }
+    .editor .editor-grid { display:grid; grid-template-columns: 340px 1fr; gap:18px; }
+    @media (max-width: 980px){ .editor .editor-grid{ grid-template-columns: 1fr; } }
+    .toolbox { background:#fff; border:1px solid #eceff6; border-radius:10px; padding:12px; }
+    .toolbox h4 { margin:0 0 8px 0; color: var(--maroon); font-size:14px; letter-spacing:.3px; }
+    .tool { display:grid; grid-template-columns: 140px 1fr; align-items:center; gap:8px; padding:6px 0; }
+    .tool label { font-size:12px; text-transform:uppercase; color:#6b7280; letter-spacing:.6px; }
+    .tool input[type="number"], .tool select { width:100%; padding:8px 10px; border:1px solid #e3e6ef; border-radius:8px; }
+    .preview-wrap { background:#f9fafb; border:1px dashed #d1d5db; border-radius:12px; padding:16px; display:flex; justify-content:center; align-items:center; }
+    .paper-canvas { background:#ffffff; position:relative; box-shadow:0 12px 40px rgba(0,0,0,.08); border:1px solid #eee; overflow:hidden; }
+    .paper-inner { width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; box-sizing: border-box; }
+    .paper-inner img { display:block; max-width:none; max-height:none; }
+    .paper-inner embed, .paper-inner object { width:100%; height:100%; border:0; }
+    .thumbs { display:flex; gap:10px; overflow:auto; padding:10px 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); }
+    .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
+    .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+    .thumb.active { outline:2px solid var(--maroon); }
   </style>
   <script>
     // Optional: purely UI feedback without backend
@@ -430,6 +450,31 @@
       formData.append('service_type', 'bookbind');
       formData.append('subject', subject);
       formData.append('message', message);
+      // Include print settings
+      try {
+        const copiesEl = document.getElementById('ctl-copies');
+        const duplexEl = document.getElementById('ctl-duplex');
+        const paperEl = document.getElementById('ctl-paper');
+        const orientEl = document.getElementById('ctl-orientation');
+        const topEl = document.getElementById('ctl-top');
+        const rightEl = document.getElementById('ctl-right');
+        const bottomEl = document.getElementById('ctl-bottom');
+        const leftEl = document.getElementById('ctl-left');
+        const scaleEl = document.getElementById('ctl-scale');
+        const fitEl = document.getElementById('ctl-fit');
+        const colorEl = document.getElementById('ctl-color');
+        if (copiesEl) formData.append('copies', Math.max(1, parseInt(copiesEl.value||'1',10)));
+        if (duplexEl) formData.append('duplex', duplexEl.value);
+        if (paperEl) formData.append('paper', paperEl.value);
+        if (orientEl) formData.append('orientation', orientEl.value);
+        if (topEl) formData.append('margin_top_mm', topEl.value);
+        if (rightEl) formData.append('margin_right_mm', rightEl.value);
+        if (bottomEl) formData.append('margin_bottom_mm', bottomEl.value);
+        if (leftEl) formData.append('margin_left_mm', leftEl.value);
+        if (scaleEl) formData.append('scale_percent', scaleEl.value);
+        if (fitEl) formData.append('fit_mode', fitEl.value);
+        if (colorEl) formData.append('color_mode', colorEl.value);
+      } catch (e) {}
       
       // Add files to form data
       for (let i = 0; i < files.length; i++) {
@@ -467,6 +512,21 @@
             key: 'recentEmails',
             newValue: JSON.stringify(recentEmails)
           }));
+
+          // Record order for billing with default pricing
+          const DEFAULT_PRICES = { bookbind: 120 };
+          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+          const order = {
+            id: 'ORD-' + Date.now(),
+            serviceType: 'bookbind',
+            subject: subject,
+            amount: DEFAULT_PRICES.bookbind,
+            status: 'Unpaid',
+            createdAt: new Date().toISOString()
+          };
+          orders.push(order);
+          localStorage.setItem('orders', JSON.stringify(orders));
+          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
         } else {
           ticker.textContent = `Error: ${data.message}`;
           ticker.classList.remove('sending', 'sent');
@@ -537,6 +597,211 @@
         fileUploadArea.addEventListener('dragleave', handleDragLeave);
         fileUploadArea.addEventListener('drop', handleDrop);
       }
+
+      // Live Preview wiring
+      const controls = {
+        paper: document.getElementById('ctl-paper'),
+        orientation: document.getElementById('ctl-orientation'),
+        top: document.getElementById('ctl-top'),
+        right: document.getElementById('ctl-right'),
+        bottom: document.getElementById('ctl-bottom'),
+        left: document.getElementById('ctl-left'),
+        scale: document.getElementById('ctl-scale'),
+        fit: document.getElementById('ctl-fit'),
+        color: document.getElementById('ctl-color'),
+        copies: document.getElementById('ctl-copies'),
+        duplex: document.getElementById('ctl-duplex'),
+      };
+      const canvas = document.getElementById('paper-canvas');
+      const paperInner = document.getElementById('paper-inner');
+      const thumbs = document.getElementById('thumbs');
+      let currentFileUrl = null;
+      let currentFileType = null;
+      let pdfDoc = null;
+      let currentPdfPage = 1;
+
+      function mmToPx(mm) { return (mm / 25.4) * 96; }
+      function paperSizePx(size){
+        switch(size){
+          case 'Letter': return { w:mmToPx(215.9), h:mmToPx(279.4) };
+          case 'Legal': return { w:mmToPx(215.9), h:mmToPx(355.6) };
+          case 'A3': return { w:mmToPx(297), h:mmToPx(420) };
+          default: return { w:mmToPx(210), h:mmToPx(297) }; // A4
+        }
+      }
+
+      function applyPreviewDims(){
+        const size = paperSizePx(controls.paper.value);
+        const landscape = controls.orientation.value === 'landscape';
+        const pageWmm = landscape ? size.h : size.w;
+        const pageHmm = landscape ? size.w : size.h;
+
+        const maxScreenW = 520;
+        const displayScale = Math.min(1, maxScreenW / pageWmm);
+        const canvasWpx = Math.round(pageWmm * displayScale);
+        const canvasHpx = Math.round(pageHmm * displayScale);
+        canvas.style.width = canvasWpx + 'px';
+        canvas.style.height = canvasHpx + 'px';
+
+        const padTop = Math.max(0, mmToPx(parseFloat(controls.top.value||'0')) * displayScale);
+        const padRight = Math.max(0, mmToPx(parseFloat(controls.right.value||'0')) * displayScale);
+        const padBottom = Math.max(0, mmToPx(parseFloat(controls.bottom.value||'0')) * displayScale);
+        const padLeft = Math.max(0, mmToPx(parseFloat(controls.left.value||'0')) * displayScale);
+        paperInner.style.padding = `${padTop}px ${padRight}px ${padBottom}px ${padLeft}px`;
+
+        const innerW = canvasWpx - padLeft - padRight;
+        const innerH = canvasHpx - padTop - padBottom;
+
+        const content = paperInner.firstElementChild;
+        if (!content) return;
+        content.style.transformOrigin = 'center center';
+        content.style.transform = 'none';
+
+        if (controls.color.value === 'grayscale') {
+          content.style.filter = 'grayscale(100%)';
+        } else if (controls.color.value === 'bw') {
+          content.style.filter = 'grayscale(100%) contrast(160%) brightness(110%)';
+        } else {
+          content.style.filter = 'none';
+        }
+
+        if (content.tagName.toLowerCase() === 'img') {
+          const naturalW = content.naturalWidth || innerW;
+          const naturalH = content.naturalHeight || innerH;
+          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
+          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
+          let pct = parseInt(controls.scale.value || '100', 10) / 100;
+          if (fitMode.includes('fit to printable')) pct = scaleToFit;
+          else if (fitMode.includes('shrink')) pct = Math.min(pct, scaleToFit);
+          content.style.width = naturalW + 'px';
+          content.style.height = 'auto';
+          content.style.transform = `scale(${pct})`;
+        } else if (content.tagName.toLowerCase() === 'canvas') {
+          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
+          const naturalW = content.width;
+          const naturalH = content.height;
+          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
+          let pct = parseInt(controls.scale.value || '100', 10) / 100;
+          if (fitMode.includes('fit to printable')) pct = scaleToFit;
+          else if (fitMode.includes('shrink')) pct = Math.min(pct, scaleToFit);
+          content.style.transform = `scale(${pct})`;
+          content.style.transformOrigin = 'center center';
+        }
+      }
+
+      function loadPreviewFromFiles(){
+        const files = fileInput.files;
+        if (!files || !files[0]) return;
+        const file = files[0];
+        const url = URL.createObjectURL(file);
+        currentFileUrl = url;
+        currentFileType = file.type;
+        paperInner.innerHTML = '';
+        thumbs.style.display = 'none';
+        thumbs.innerHTML = '';
+        if (file.type.startsWith('image/')) {
+          const img = new Image();
+          img.onload = () => applyPreviewDims();
+          img.src = url;
+          paperInner.appendChild(img);
+        } else if (file.type === 'application/pdf') {
+          pdfjsLib.getDocument(url).promise.then(doc => {
+            pdfDoc = doc; currentPdfPage = 1; thumbs.style.display = 'flex';
+            renderPdfThumbnails();
+            renderPdfPage(currentPdfPage);
+          });
+        } else {
+          const note = document.createElement('div');
+          note.textContent = 'Preview not available for this file type. The file will still be sent.';
+          note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
+          paperInner.appendChild(note);
+          applyPreviewDims();
+        }
+      }
+
+      function renderPdfThumbnails(){
+        if (!pdfDoc) return;
+        thumbs.innerHTML = '';
+        const count = pdfDoc.numPages;
+        for (let p = 1; p <= count; p++) {
+          pdfDoc.getPage(p).then(page => {
+            const viewport = page.getViewport({ scale: 0.3 });
+            const c = document.createElement('canvas');
+            c.width = viewport.width; c.height = viewport.height;
+            const ctx = c.getContext('2d');
+            page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+              const wrap = document.createElement('div');
+              wrap.className = 'thumb' + (p === currentPdfPage ? ' active' : '');
+              wrap.dataset.page = page.pageNumber;
+              wrap.appendChild(c);
+              wrap.addEventListener('click', () => { currentPdfPage = page.pageNumber; renderPdfPage(currentPdfPage); highlightThumb(); });
+              thumbs.appendChild(wrap);
+            });
+          });
+        }
+      }
+
+      function highlightThumb(){
+        document.querySelectorAll('.thumb').forEach(el => el.classList.remove('active'));
+        const active = Array.from(document.querySelectorAll('.thumb')).find(el => parseInt(el.dataset.page,10) === currentPdfPage);
+        if (active) active.classList.add('active');
+      }
+
+      function renderPdfPage(pageNum){
+        if (!pdfDoc) return;
+        pdfDoc.getPage(pageNum).then(page => {
+          const desiredWidth = 1200;
+          const vp = page.getViewport({ scale: 1 });
+          const scale = desiredWidth / vp.width;
+          const viewport = page.getViewport({ scale });
+          const c = document.createElement('canvas');
+          c.width = viewport.width; c.height = viewport.height;
+          const ctx = c.getContext('2d');
+          page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+            paperInner.innerHTML = '';
+            paperInner.appendChild(c);
+            applyPreviewDims();
+            highlightThumb();
+          });
+        });
+      }
+
+      window.openPrintPreview = function openPrintPreview(){
+        const size = paperSizePx(controls.paper.value);
+        const landscape = controls.orientation.value === 'landscape';
+        const pageWmm = landscape ? size.h : size.w;
+        const pageHmm = landscape ? size.w : size.h;
+        const mTop = parseFloat(controls.top.value||'0');
+        const mRight = parseFloat(controls.right.value||'0');
+        const mBottom = parseFloat(controls.bottom.value||'0');
+        const mLeft = parseFloat(controls.left.value||'0');
+
+        const win = window.open('', '_blank');
+        const style = `@page { size: ${pageWmm}mm ${pageHmm}mm; margin: 0; } body{ margin:0; } .page{ width:${pageWmm}mm; height:${pageHmm}mm; box-sizing:border-box; padding:${mTop}mm ${mRight}mm ${mBottom}mm ${mLeft}mm; display:flex; align-items:center; justify-content:center; } img{ max-width:100%; max-height:100%; } canvas{ max-width:100%; max-height:100%; }`;
+        win.document.write('<!DOCTYPE html><html><head><title>Print Preview</title><style>'+style+'</style></head><body>');
+        win.document.write('<div class="page">');
+
+        if (currentFileType && currentFileType.startsWith('image/')) {
+          win.document.write('<img src="'+ currentFileUrl +'" />');
+        } else if (pdfDoc) {
+          const currentCanvas = paperInner.querySelector('canvas');
+          if (currentCanvas) {
+            const dataUrl = currentCanvas.toDataURL('image/png');
+            win.document.write('<img src="'+ dataUrl +'" />');
+          } else {
+            win.document.write('<div>PDF preview unavailable.</div>');
+          }
+        } else {
+          win.document.write('<div>No preview available.</div>');
+        }
+
+        win.document.write('</div></body></html>');
+        win.document.close();
+      }
+
+      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); });
+      Object.values(controls).forEach(ctrl => ctrl && ctrl.addEventListener('input', applyPreviewDims));
+      applyPreviewDims();
     });
 
   </script>
@@ -614,6 +879,72 @@
           </form>
         </div>
 
+        <!-- Live Preview Editor (Bookbind defaults emphasize left margin and duplex) -->
+        <div class="editor" aria-label="Live Preview Editor">
+          <div class="editor-grid">
+            <div class="toolbox">
+              <h4>Print Settings</h4>
+              <div class="tool"><label for="ctl-paper">Paper Size</label>
+                <select id="ctl-paper">
+                  <option selected>A4</option>
+                  <option>Letter</option>
+                  <option>Legal</option>
+                  <option>A3</option>
+                </select>
+              </div>
+              <div class="tool"><label for="ctl-orientation">Orientation</label>
+                <select id="ctl-orientation">
+                  <option value="portrait" selected>Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+              <div class="tool"><label>Margins (mm)</label>
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+                  <input id="ctl-top" type="number" min="0" value="10" />
+                  <input id="ctl-right" type="number" min="0" value="10" />
+                  <input id="ctl-bottom" type="number" min="0" value="10" />
+                  <input id="ctl-left" type="number" min="0" value="20" />
+                </div>
+              </div>
+              <div class="tool"><label for="ctl-scale">Scale (%)</label>
+                <input id="ctl-scale" type="number" min="10" max="200" value="100" />
+              </div>
+              <div class="tool"><label for="ctl-fit">Fit</label>
+                <select id="ctl-fit">
+                  <option>Actual size</option>
+                  <option selected>Shrink oversized pages</option>
+                  <option>Fit to printable area</option>
+                </select>
+              </div>
+              <div class="tool"><label for="ctl-color">Color</label>
+                <select id="ctl-color">
+                  <option value="bw" selected>Black & White</option>
+                  <option value="grayscale">Grayscale</option>
+                  <option value="color">Color</option>
+                </select>
+              </div>
+              <div class="tool"><label for="ctl-copies">Copies</label>
+                <input id="ctl-copies" type="number" min="1" value="1" />
+              </div>
+              <div class="tool"><label for="ctl-duplex">Duplex</label>
+                <select id="ctl-duplex">
+                  <option value="long" selected>Double-sided (flip on long edge)</option>
+                  <option value="short">Double-sided (flip on short edge)</option>
+                  <option value="single">Single-sided</option>
+                </select>
+              </div>
+              <div style="display:flex; gap:8px; margin-top:8px;">
+                <button type="button" class="button" onclick="openPrintPreview()"><i class="fas fa-print"></i> Print Preview</button>
+              </div>
+            </div>
+            <div class="preview-wrap">
+              <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div id="paper-inner" class="paper-inner"></div>
+              </div>
+            </div>
+          </div>
+          <div id="thumbs" class="thumbs" aria-label="PDF Thumbnails" style="display:none"></div>
+        </div>
 
         <div class="footer">
         </div>

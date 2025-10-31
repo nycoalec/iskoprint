@@ -219,6 +219,21 @@ $currentUser = $auth->getCurrentUser();
             border-color: #3d4a66;
         }
 
+        /* Email details modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index: 1200; }
+        .modal-overlay.active { display:flex; }
+        .modal { width: 92%; max-width: 700px; background:#fff; border-radius:12px; box-shadow: 0 20px 60px rgba(0,0,0,.25); overflow:hidden; border:1px solid #e9ecef; }
+        .modal-header { display:flex; align-items:center; justify-content: space-between; padding:16px 18px; background:#750d0d; color:#fff; }
+        .modal-title { font-weight:700; letter-spacing:.4px; text-transform: uppercase; }
+        .modal-close { background:transparent; border:0; color:#fff; font-size:18px; cursor:pointer; }
+        .modal-body { padding:18px; }
+        .modal-row { margin-bottom:12px; }
+        .modal-label { font-size:12px; color:#6c757d; text-transform: uppercase; letter-spacing:.6px; display:block; margin-bottom:6px; }
+        .modal-value { color:#2c3e50; }
+        .modal-footer { padding: 0 18px 18px; display:flex; justify-content:flex-end; }
+        .btn { appearance:none; border:1px solid #e5e7eb; background:#f7f7f9; color:#333; border-radius:8px; padding:10px 14px; cursor:pointer; font-weight:600; }
+        .btn:hover { filter: brightness(.97); }
+
         .email-header {
             display: flex;
             justify-content: space-between;
@@ -425,6 +440,45 @@ $currentUser = $auth->getCurrentUser();
     </div>
     </div>
 
+    <!-- Email Details Modal -->
+    <div id="emailModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="emailModalTitle">
+        <div class="modal">
+            <div class="modal-header">
+                <div id="emailModalTitle" class="modal-title">Email Details</div>
+                <button class="modal-close" onclick="closeEmailModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-row">
+                    <span class="modal-label">From</span>
+                    <div class="modal-value" id="modalFrom"></div>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">To</span>
+                    <div class="modal-value" id="modalTo">Isko Print Admin</div>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">Date</span>
+                    <div class="modal-value" id="modalDate"></div>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">Subject</span>
+                    <div class="modal-value" id="modalSubject"></div>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">Message</span>
+                    <div class="modal-value" id="modalBody" style="white-space:pre-wrap; line-height:1.6"></div>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">Status</span>
+                    <div class="modal-value" id="modalStatus"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEmailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Auto-response messages for different services
         const autoResponseMessages = {
@@ -476,15 +530,28 @@ $currentUser = $auth->getCurrentUser();
             // Create new email item
             const emailItem = document.createElement('div');
             emailItem.className = 'email-item';
+            const bodyText = autoResponseMessages[serviceType] || 'Thank you for your service request! We have received your files and will process them as soon as possible.';
+            const dateText = new Date().toLocaleString();
             emailItem.innerHTML = `
                 <div class="email-header">
                     <div class="email-from">Isko Print Admin</div>
-                    <div class="email-date">${new Date().toLocaleString()}</div>
+                    <div class="email-date">${dateText}</div>
                 </div>
                 <div class="email-subject">✅ Confirmation: ${serviceNames[serviceType] || 'Service'} Request Received</div>
-                <div class="email-preview">${autoResponseMessages[serviceType] || 'Thank you for your service request! We have received your files and will process them as soon as possible.'}</div>
+                <div class="email-preview">${bodyText}</div>
                 <div class="email-status status-received">Received</div>
             `;
+            // Dataset for modal
+            emailItem.dataset.from = 'Isko Print Admin';
+            emailItem.dataset.to = 'You';
+            emailItem.dataset.date = dateText;
+            emailItem.dataset.subject = `Confirmation: ${serviceNames[serviceType] || 'Service'} Request Received`;
+            emailItem.dataset.body = bodyText;
+            emailItem.dataset.status = 'Received';
+            emailItem.setAttribute('role', 'button');
+            emailItem.setAttribute('tabindex', '0');
+            emailItem.addEventListener('click', () => openEmailModal(emailItem));
+            emailItem.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEmailModal(emailItem); } });
             
             // Add to top of received emails
             receivedContainer.insertBefore(emailItem, receivedContainer.firstChild);
@@ -506,19 +573,55 @@ $currentUser = $auth->getCurrentUser();
             // Create new email item
             const emailItem = document.createElement('div');
             emailItem.className = 'email-item';
+            const dateText = new Date().toLocaleString();
+            const subjText = `[${serviceNames[serviceType] || 'Service'}] ${subject}`;
+            const bodyText = 'Service request sent to admin';
             emailItem.innerHTML = `
                 <div class="email-header">
                     <div class="email-from">You</div>
-                    <div class="email-date">${new Date().toLocaleString()}</div>
+                    <div class="email-date">${dateText}</div>
                 </div>
-                <div class="email-subject">[${serviceNames[serviceType] || 'Service'}] ${subject}</div>
-                <div class="email-preview">Service request sent to admin</div>
+                <div class="email-subject">${subjText}</div>
+                <div class="email-preview">${bodyText}</div>
                 <div class="email-status status-sent">Sent</div>
             `;
+            // Dataset for modal
+            emailItem.dataset.from = 'You';
+            emailItem.dataset.to = 'Isko Print Admin';
+            emailItem.dataset.date = dateText;
+            emailItem.dataset.subject = subjText;
+            emailItem.dataset.body = bodyText;
+            emailItem.dataset.status = 'Sent';
+            emailItem.setAttribute('role', 'button');
+            emailItem.setAttribute('tabindex', '0');
+            emailItem.addEventListener('click', () => openEmailModal(emailItem));
+            emailItem.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEmailModal(emailItem); } });
             
             // Add to top of sent emails
             sentContainer.insertBefore(emailItem, sentContainer.firstChild);
         }
+
+        // Modal helpers
+        function openEmailModal(item){
+            const m = document.getElementById('emailModal');
+            document.getElementById('modalFrom').textContent = item.dataset.from || '';
+            document.getElementById('modalTo').textContent = item.dataset.to || '';
+            document.getElementById('modalDate').textContent = item.dataset.date || '';
+            document.getElementById('modalSubject').textContent = item.dataset.subject || '';
+            document.getElementById('modalBody').textContent = item.dataset.body || '';
+            document.getElementById('modalStatus').textContent = item.dataset.status || '';
+            m.classList.add('active');
+        }
+        function closeEmailModal(){
+            const m = document.getElementById('emailModal');
+            m.classList.remove('active');
+        }
+        // Close on overlay click or Esc
+        document.addEventListener('click', (e)=>{
+            const overlay = document.getElementById('emailModal');
+            if (e.target === overlay) closeEmailModal();
+        });
+        document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeEmailModal(); });
 
         // Function to show notification
         function showNotification(message) {
