@@ -10,9 +10,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <style>
     :root {
-      --paper: #fffef8;
+      --paper: #ffffff;
       --ink: #1a1a1a;
       --maroon: #750d0d;
       --maroon-dark: #5d0a0a;
@@ -92,11 +93,11 @@
     .paper {
       background: var(--paper);
       margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 1px 0 #f1f1f1, 0 10px 30px var(--shadow);
+      border-radius: 0;
+      box-shadow: none;
       position: relative;
       overflow: hidden;
-      border: 1px solid #eee;
+      border: none;
     }
 
     .paper::before, .paper::after {
@@ -218,6 +219,46 @@
       padding: 8px 0;
     }
 
+    /* Override for compose section */
+    .compose-section {
+      background: #ffffff;
+      border-radius: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .compose-section .field {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .compose-section .field:has(textarea:not([aria-label])) {
+      grid-template-columns: 1fr;
+    }
+
+    .compose-section .field:has(textarea) {
+      align-items: start;
+    }
+
+    .compose-section .field:last-of-type {
+      border-bottom: none;
+      padding-top: 16px;
+    }
+
+    .compose-section .field label {
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+      padding-top: 0;
+      text-align: left;
+    }
+
     .field label {
       color: var(--muted);
       text-transform: uppercase;
@@ -238,10 +279,43 @@
       box-shadow: inset 0 1px 0 #f7f9fc;
     }
 
+    .compose-section input[type="text"], .compose-section input[type="email"], .compose-section textarea {
+      border: none;
+      background: transparent;
+      border-radius: 0;
+      padding: 8px 0;
+      box-shadow: none;
+      color: #333;
+    }
+
+    .compose-section input[type="text"]::placeholder, .compose-section input[type="email"]::placeholder, .compose-section textarea::placeholder {
+      color: #999;
+    }
+
+    .readonly-field {
+      color: #666;
+      cursor: default;
+      background: #f9f9f9;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+
     textarea { min-height: 160px; resize: vertical; }
+
+    .compose-section textarea {
+      min-height: 200px;
+      padding: 16px 0;
+      line-height: 1.6;
+    }
 
     .file-upload-wrapper {
       position: relative;
+    }
+
+    .compose-section .file-upload-wrapper {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
     }
     
     input[type="file"] {
@@ -269,11 +343,28 @@
       justify-content: center;
       gap: 8px;
     }
+
+    .compose-section .file-upload-area {
+      width: 100%;
+      max-width: 600px;
+      border: 2px dashed #ccc;
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 32px 24px;
+      min-height: 120px;
+      gap: 12px;
+    }
     
     .file-upload-area:hover {
       border-color: var(--maroon);
       background: #fef2f2;
       transform: translateY(-1px);
+    }
+
+    .compose-section .file-upload-area:hover {
+      border-color: #999;
+      background: #f5f5f5;
+      transform: none;
     }
     
     .file-upload-area.dragover {
@@ -281,11 +372,23 @@
       background: #fef2f2;
       transform: scale(1.02);
     }
+
+    .compose-section .file-upload-area.dragover {
+      border-color: #666;
+      background: #f0f0f0;
+      transform: none;
+    }
     
     .file-upload-icon {
       font-size: 24px;
       color: var(--maroon);
       margin-bottom: 8px;
+    }
+
+    .compose-section .file-upload-icon {
+      font-size: 32px;
+      color: #666;
+      margin-bottom: 4px;
     }
     
     .file-upload-text {
@@ -294,10 +397,79 @@
       color: var(--maroon);
       margin-bottom: 4px;
     }
+
+    .compose-section .file-upload-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     
     .file-upload-subtext {
       font-size: 12px;
       color: var(--muted);
+    }
+
+    .compose-section .file-upload-subtext {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .file-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #d1d5db;
+      width: 100%;
+    }
+    
+    .file-info-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--maroon);
+      font-weight: 600;
+    }
+    
+    .file-names-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    
+    .file-name-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #f9fafb;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--ink);
+    }
+    
+    .file-name-item i {
+      color: var(--maroon);
+      font-size: 11px;
+    }
+    
+    .file-name-text {
+      flex: 1;
+      word-break: break-all;
     }
     
     .ticker.error {
@@ -412,11 +584,109 @@
     .tool { display:grid; grid-template-columns: 140px 1fr; align-items:center; gap:8px; padding:6px 0; }
     .tool label { font-size:12px; text-transform:uppercase; color:#6b7280; letter-spacing:.6px; }
     .tool input[type="number"], .tool select { width:100%; padding:8px 10px; border:1px solid #e3e6ef; border-radius:8px; }
-    .preview-wrap { background:#f9fafb; border:1px dashed #d1d5db; border-radius:12px; padding:16px; display:flex; justify-content:center; align-items:center; }
-    .paper-canvas { background:#ffffff; position:relative; box-shadow:0 12px 40px rgba(0,0,0,.08); border:1px solid #eee; overflow:hidden; }
-    .paper-inner { width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; box-sizing: border-box; }
-    .paper-inner img { display:block; max-width:none; max-height:none; }
+    .preview-wrap { 
+      background:#f9fafb; 
+      border:1px dashed #d1d5db; 
+      border-radius:12px; 
+      padding:16px; 
+      display:flex; 
+      justify-content:center; 
+      align-items:flex-start; 
+      min-height: 500px;
+      max-height: 600px;
+      overflow: auto;
+    }
+    .paper-canvas { 
+      background:#ffffff; 
+      position:relative; 
+      box-shadow:0 12px 40px rgba(0,0,0,.08); 
+      border:1px solid #eee; 
+      overflow: visible; 
+      min-height: 400px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .paper-inner { 
+      width:100%; 
+      min-height: 100%;
+      display:flex; 
+      align-items:flex-start; 
+      justify-content:center; 
+      position:relative; 
+      overflow: visible; 
+      box-sizing: border-box; 
+      padding: 10px 20px;
+    }
+    .paper-inner img { 
+      display:block; 
+      max-width:100%; 
+      height:auto; 
+    }
+    .paper-inner canvas { 
+      max-width:100%; 
+      height:auto; 
+      display:block;
+    }
+    .paper-inner div {
+      width: 100%;
+      max-width: 100%;
+    }
+    .paper-inner pre {
+      width: 100%;
+      max-width: 100%;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
     .paper-inner embed, .paper-inner object { width:100%; height:100%; border:0; }
+    
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    
+    .zoom-btn {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--maroon);
+      font-size: 14px;
+    }
+    
+    .zoom-btn:hover {
+      background: #f9fafb;
+      border-color: var(--maroon);
+      transform: scale(1.05);
+    }
+    
+    .zoom-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .zoom-level {
+      min-width: 50px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--maroon);
+    }
 
     /* Thumbnails */
     .thumbs { display:flex; gap:10px; overflow:auto; padding:10px 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); }
@@ -573,14 +843,78 @@
       const fileInput = document.getElementById('file_upload');
       const fileInfo = document.getElementById('file-info');
       const fileCount = document.getElementById('file-count');
+      const fileNamesList = document.getElementById('file-names-list');
       const files = fileInput.files;
       
       if (files.length > 0) {
         fileInfo.style.display = 'flex';
-        fileCount.textContent = `${files.length} file(s) selected`;
+        fileCount.textContent = `${files.length} FILE(S) SELECTED`;
+        
+        // Clear existing file names
+        fileNamesList.innerHTML = '';
+        
+        // Display each file name
+        for (let i = 0; i < files.length; i++) {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-name-item';
+          fileItem.innerHTML = `
+            <i class="fas fa-file"></i>
+            <span class="file-name-text">${files[i].name}</span>
+            <small style="color: var(--muted); font-size: 10px;">${formatFileSize(files[i].size)}</small>
+          `;
+          fileNamesList.appendChild(fileItem);
+        }
       } else {
         fileInfo.style.display = 'none';
         fileCount.textContent = '0 files selected';
+        fileNamesList.innerHTML = '';
+      }
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    function clearFiles() {
+      const fileInput = document.getElementById('file_upload');
+      const fileInfo = document.getElementById('file-info');
+      const fileNamesList = document.getElementById('file-names-list');
+      const subjectInput = document.getElementById('subject');
+      const messageInput = document.getElementById('message');
+      
+      // Clear file input
+      if (fileInput) {
+        fileInput.value = '';
+        updateFileCount();
+      }
+      
+      // Clear subject and message fields
+      if (subjectInput) {
+        subjectInput.value = '';
+      }
+      if (messageInput) {
+        messageInput.value = '';
+      }
+      
+      // Also clear preview if it exists
+      const previewWrap = document.querySelector('.preview-wrap');
+      if (previewWrap) {
+        const paperInner = previewWrap.querySelector('.paper-inner');
+        if (paperInner) {
+          paperInner.innerHTML = '';
+        }
+      }
+      
+      // Reset zoom to 100%
+      if (typeof window.currentZoom !== 'undefined') {
+        window.currentZoom = 100;
+        if (typeof updateZoom === 'function') {
+          updateZoom();
+        }
       }
     }
 
@@ -615,6 +949,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       const fileInput = document.getElementById('file_upload');
       const fileUploadArea = document.querySelector('.file-upload-area');
+      const form = document.querySelector('form');
       
       if (fileInput) {
         fileInput.addEventListener('change', updateFileCount);
@@ -625,6 +960,91 @@
         fileUploadArea.addEventListener('dragleave', handleDragLeave);
         fileUploadArea.addEventListener('drop', handleDrop);
       }
+      
+      // Handle form reset to clear files display
+      if (form) {
+        form.addEventListener('reset', function(e) {
+          // Small delay to ensure form reset completes first
+          setTimeout(clearFiles, 0);
+        });
+      }
+
+      // Zoom functionality
+      window.currentZoom = 100;
+      const zoomIncrement = 25;
+      const minZoom = 25;
+      const maxZoom = 500;
+      
+      function updateZoom() {
+        const paperInner = document.getElementById('paper-inner');
+        const paperCanvas = document.getElementById('paper-canvas');
+        
+        if (paperInner && paperCanvas) {
+          const zoomScale = window.currentZoom / 100;
+          
+          // Simply apply zoom transform to paperInner - this scales the content
+          // The container (paperCanvas) stays fixed position
+          paperInner.style.transform = `scale(${zoomScale})`;
+          paperInner.style.transformOrigin = 'top left';
+          
+          // When zoomed out (scale <= 1): NO scrollbars, file shrinks, all content visible
+          // When zoomed in (scale > 1): Show scrollbars only if needed
+          if (zoomScale <= 1) {
+            // Zoomed out - file shrinks, no scrollbars needed
+            paperCanvas.style.overflow = 'hidden';
+          } else {
+            // Zoomed in - enable scrollbars to see enlarged content
+            paperCanvas.style.overflow = 'auto';
+          }
+        }
+        
+        const zoomLevelDisplay = document.getElementById('zoom-level');
+        if (zoomLevelDisplay) {
+          zoomLevelDisplay.textContent = window.currentZoom + '%';
+        }
+      }
+      
+      function zoomIn() {
+        if (window.currentZoom < maxZoom) {
+          window.currentZoom = Math.min(window.currentZoom + zoomIncrement, maxZoom);
+          updateZoom();
+        }
+      }
+      
+      function zoomOut() {
+        if (window.currentZoom > minZoom) {
+          window.currentZoom = Math.max(window.currentZoom - zoomIncrement, minZoom);
+          updateZoom();
+        }
+      }
+      
+      function resetZoom() {
+        window.currentZoom = 100;
+        updateZoom();
+      }
+      
+      // Make zoom functions globally accessible
+      window.zoomIn = zoomIn;
+      window.zoomOut = zoomOut;
+      window.resetZoom = resetZoom;
+      
+      // Add keyboard shortcuts for zoom (Ctrl/Cmd + Plus, Minus, 0)
+      document.addEventListener('keydown', function(e) {
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        const previewWrap = document.querySelector('.preview-wrap');
+        if (!previewWrap || previewWrap.style.display === 'none') return;
+        
+        if (isCtrlOrCmd && e.key === '=') {
+          e.preventDefault();
+          zoomIn();
+        } else if (isCtrlOrCmd && e.key === '-') {
+          e.preventDefault();
+          zoomOut();
+        } else if (isCtrlOrCmd && e.key === '0') {
+          e.preventDefault();
+          resetZoom();
+        }
+      });
 
       // Live Preview wiring
       const controls = {
@@ -659,38 +1079,28 @@
       }
 
       function applyPreviewDims(){
-        const size = paperSizePx(controls.paper.value);
-        const landscape = controls.orientation.value === 'landscape';
-        const pageWmm = landscape ? size.h : size.w;
-        const pageHmm = landscape ? size.w : size.h;
-
-        // Display scale to fit canvas nicely on screen (does not affect print meaning)
-        const maxScreenW = 520;
-        const displayScale = Math.min(1, maxScreenW / pageWmm);
-        const canvasWpx = Math.round(pageWmm * displayScale);
-        const canvasHpx = Math.round(pageHmm * displayScale);
-        canvas.style.width = canvasWpx + 'px';
-        canvas.style.height = canvasHpx + 'px';
-
-        // Margins in mm converted to px then multiplied by display scale only
-        const padTop = Math.max(0, mmToPx(parseFloat(controls.top.value||'0')) * displayScale);
-        const padRight = Math.max(0, mmToPx(parseFloat(controls.right.value||'0')) * displayScale);
-        const padBottom = Math.max(0, mmToPx(parseFloat(controls.bottom.value||'0')) * displayScale);
-        const padLeft = Math.max(0, mmToPx(parseFloat(controls.left.value||'0')) * displayScale);
-        paperInner.style.padding = `${padTop}px ${padRight}px ${padBottom}px ${padLeft}px`;
-
-        const innerW = canvasWpx - padLeft - padRight;
-        const innerH = canvasHpx - padTop - padBottom;
-
-        // Content handling
         const content = paperInner.firstElementChild;
-        if (!content) return;
+        if (!content) {
+          const size = paperSizePx(controls.paper.value);
+          const landscape = controls.orientation.value === 'landscape';
+          const pageWmm = landscape ? size.h : size.w;
+          const pageHmm = landscape ? size.w : size.h;
+          const maxScreenW = 520;
+          const displayScale = Math.min(1, maxScreenW / pageWmm);
+          canvas.style.width = Math.round(pageWmm * displayScale) + 'px';
+          canvas.style.minHeight = Math.round(pageHmm * displayScale) + 'px';
+          canvas.style.height = 'auto';
+          const padTop = Math.max(0, mmToPx(parseFloat(controls.top.value||'0')) * displayScale);
+          const padRight = Math.max(0, mmToPx(parseFloat(controls.right.value||'0')) * displayScale);
+          const padBottom = Math.max(0, mmToPx(parseFloat(controls.bottom.value||'0')) * displayScale);
+          const padLeft = Math.max(0, mmToPx(parseFloat(controls.left.value||'0')) * displayScale);
+          paperInner.style.padding = `${padTop}px ${padRight}px ${padBottom}px ${padLeft}px`;
+          return;
+        }
 
-        // Reset transforms by default
         content.style.transformOrigin = 'center center';
         content.style.transform = 'none';
 
-        // Color filters
         if (controls.color.value === 'grayscale') {
           content.style.filter = 'grayscale(100%)';
         } else if (controls.color.value === 'bw') {
@@ -699,34 +1109,70 @@
           content.style.filter = 'none';
         }
 
-        // For images: compute natural scaling
-        if (content.tagName.toLowerCase() === 'img') {
-          const naturalW = content.naturalWidth || innerW;
-          const naturalH = content.naturalHeight || innerH;
-          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
-          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
-          let pct = parseInt(controls.scale.value || '100', 10) / 100;
+        const maxScreenW = 600;
+        let contentW, contentH;
+        let padding = 20;
 
-          if (fitMode.includes('fit to printable')) {
-            pct = scaleToFit;
-          } else if (fitMode.includes('shrink')) {
-            pct = Math.min(pct, scaleToFit);
+        if (content.tagName.toLowerCase() === 'div') {
+          content.style.width = 'auto';
+          content.style.maxWidth = maxScreenW - (padding * 2) + 'px';
+          content.style.margin = '0';
+          content.style.display = 'block';
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        } else if (content.tagName.toLowerCase() === 'pre') {
+          content.style.width = 'auto';
+          content.style.maxWidth = maxScreenW - (padding * 2) + 'px';
+          content.style.margin = '0';
+          content.style.display = 'block';
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        } else if (content.tagName.toLowerCase() === 'img') {
+          contentW = content.naturalWidth || content.width || maxScreenW;
+          contentH = content.naturalHeight || content.height || 600;
+          if (contentW > maxScreenW) {
+            const scale = maxScreenW / contentW;
+            contentW = maxScreenW;
+            contentH = contentH * scale;
           }
-
-          content.style.width = naturalW + 'px';
+          content.style.width = contentW + 'px';
           content.style.height = 'auto';
-          content.style.transform = `scale(${pct})`;
+          content.style.maxWidth = '100%';
+          content.style.transform = 'none';
         } else if (content.tagName.toLowerCase() === 'canvas') {
-          // Canvas rendering already set to fit inner area
-          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
-          const naturalW = content.width;
-          const naturalH = content.height;
-          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
-          let pct = parseInt(controls.scale.value || '100', 10) / 100;
-          if (fitMode.includes('fit to printable')) pct = scaleToFit;
-          else if (fitMode.includes('shrink')) pct = Math.min(pct, scaleToFit);
-          content.style.transform = `scale(${pct})`;
-          content.style.transformOrigin = 'center center';
+          contentW = content.width || maxScreenW;
+          contentH = content.height || 800;
+          if (contentW > maxScreenW) {
+            const scale = maxScreenW / contentW;
+            contentW = maxScreenW;
+            contentH = contentH * scale;
+          }
+          content.style.maxWidth = '100%';
+          content.style.height = 'auto';
+          content.style.transform = 'none';
+        } else {
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        }
+
+        const canvasW = Math.min(contentW + (padding * 2), maxScreenW);
+        const canvasH = contentH + (padding * 2);
+        
+        canvas.style.width = canvasW + 'px';
+        canvas.style.minHeight = canvasH + 'px';
+        canvas.style.height = 'auto';
+        paperInner.style.padding = padding + 'px';
+        
+        if (content.tagName.toLowerCase() === 'div' || content.tagName.toLowerCase() === 'pre') {
+          content.style.maxWidth = (canvasW - (padding * 2)) + 'px';
+          content.style.width = '100%';
+        }
+         
+        if (typeof updateZoom === 'function') {
+          setTimeout(updateZoom, 50);
         }
       }
 
@@ -740,9 +1186,26 @@
         paperInner.innerHTML = '';
         thumbs.style.display = 'none';
         thumbs.innerHTML = '';
+        
+        // Reset zoom when loading new file
+        window.currentZoom = 100;
+        updateZoom();
+        
+        // Scroll preview to top when loading new file
+        const previewWrap = document.querySelector('.preview-wrap');
+        if (previewWrap) {
+          previewWrap.scrollTop = 0;
+        }
         if (file.type.startsWith('image/')) {
           const img = new Image();
-          img.onload = () => applyPreviewDims();
+          img.onload = () => {
+            applyPreviewDims();
+            // Ensure scroll is at top after image loads
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
+          };
           img.src = url;
           paperInner.appendChild(img);
         } else if (file.type === 'application/pdf') {
@@ -751,14 +1214,201 @@
             pdfDoc = doc; currentPdfPage = 1; thumbs.style.display = 'flex';
             renderPdfThumbnails();
             renderPdfPage(currentPdfPage);
+             // Scroll to top after PDF loads
+             setTimeout(() => {
+               const previewWrap = document.querySelector('.preview-wrap');
+               if (previewWrap) previewWrap.scrollTop = 0;
+             }, 100);
+           }).catch(error => {
+            console.error('PDF load error:', error);
+            const note = document.createElement('div');
+            note.textContent = 'Unable to preview PDF. The file will still be sent.';
+            note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
+            paperInner.appendChild(note);
+            applyPreviewDims();
           });
-        } else {
+        } else if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+          // Handle text files
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const textContent = e.target.result;
+            const pre = document.createElement('pre');
+            pre.style.fontFamily = 'monospace';
+            pre.style.fontSize = '12px';
+            pre.style.padding = '16px';
+            pre.style.margin = '0';
+            pre.style.whiteSpace = 'pre-wrap';
+            pre.style.wordWrap = 'break-word';
+            pre.style.color = '#1a1a1a';
+            pre.style.backgroundColor = '#ffffff';
+            pre.style.maxHeight = '100%';
+            pre.style.overflow = 'auto';
+            pre.textContent = textContent;
+            paperInner.appendChild(pre);
+            applyPreviewDims();
+            // Scroll to top after text loads
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
+          };
+          reader.onerror = function() {
           const note = document.createElement('div');
-          note.textContent = 'Preview not available for this file type. The file will still be sent.';
+            note.textContent = 'Unable to read text file. The file will still be sent.';
           note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
           paperInner.appendChild(note);
           applyPreviewDims();
+          };
+          reader.readAsText(file);
+        } else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) {
+          // For DOCX files, try to convert to HTML for preview using mammoth.js
+          if (file.name.toLowerCase().endsWith('.docx') && typeof mammoth !== 'undefined') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const arrayBuffer = e.target.result;
+               mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                 .then(function(result) {
+                   const previewDiv = document.createElement('div');
+                   previewDiv.style.padding = '16px';
+                   previewDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+                   previewDiv.style.fontSize = '14px';
+                   previewDiv.style.lineHeight = '1.6';
+                   previewDiv.style.color = '#1a1a1a';
+                   previewDiv.style.width = '100%';
+                   previewDiv.style.minHeight = 'auto';
+                   previewDiv.style.backgroundColor = '#ffffff';
+                   previewDiv.style.boxSizing = 'border-box';
+                   previewDiv.innerHTML = result.value;
+                   
+                   // Apply some basic styling to make it look better
+                   previewDiv.querySelectorAll('p').forEach(p => {
+                     p.style.margin = '0 0 8px 0';
+                     p.style.maxWidth = '100%';
+                     p.style.wordWrap = 'break-word';
+                   });
+                   
+                   // Style tables to be responsive
+                   previewDiv.querySelectorAll('table').forEach(table => {
+                     table.style.width = '100%';
+                     table.style.maxWidth = '100%';
+                     table.style.borderCollapse = 'collapse';
+                     table.style.margin = '8px 0';
+                     table.style.wordWrap = 'break-word';
+                   });
+                   
+                   // Ensure all content is visible
+                   previewDiv.querySelectorAll('*').forEach(el => {
+                     el.style.maxWidth = '100%';
+                     if (el.tagName === 'IMG') {
+                       el.style.maxWidth = '100%';
+                       el.style.height = 'auto';
+                     }
+                   });
+                   
+                  paperInner.appendChild(previewDiv);
+                  applyPreviewDims();
+                  // Scroll to top after DOCX content loads
+                  setTimeout(() => {
+                    const previewWrap = document.querySelector('.preview-wrap');
+                    if (previewWrap) previewWrap.scrollTop = 0;
+                  }, 100);
+                 })
+                .catch(function(error) {
+                  console.error('Error converting DOCX:', error);
+                  showDocFallback(file);
+                });
+            };
+            reader.onerror = function() {
+              showDocFallback(file);
+            };
+            reader.readAsArrayBuffer(file);
+          } else {
+            // For .doc files or if mammoth.js is not available, show fallback
+            showDocFallback(file);
+          }
+        } else {
+          // For other file types, show a generic preview
+          const infoDiv = document.createElement('div');
+          infoDiv.style.padding = '24px';
+          infoDiv.style.textAlign = 'center';
+          infoDiv.style.color = '#1a1a1a';
+          
+          const icon = document.createElement('div');
+          icon.innerHTML = '<i class="fas fa-file" style="font-size: 48px; color: #750d0d; margin-bottom: 12px;"></i>';
+          infoDiv.appendChild(icon);
+          
+          const fileName = document.createElement('div');
+          fileName.textContent = file.name;
+          fileName.style.fontWeight = '600';
+          fileName.style.fontSize = '14px';
+          fileName.style.marginBottom = '8px';
+          fileName.style.wordBreak = 'break-word';
+          infoDiv.appendChild(fileName);
+          
+          const fileSize = document.createElement('div');
+          fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+          fileSize.style.fontSize = '12px';
+          fileSize.style.color = '#6b7280';
+          fileSize.style.marginBottom = '16px';
+          infoDiv.appendChild(fileSize);
+          
+          const message = document.createElement('div');
+          message.textContent = 'Preview not available for this file type. The file will still be sent.';
+          message.style.fontSize = '12px';
+          message.style.color = '#6b7280';
+          message.style.lineHeight = '1.5';
+          infoDiv.appendChild(message);
+          
+          paperInner.appendChild(infoDiv);
+          applyPreviewDims();
+          // Scroll to top after fallback displays
+          setTimeout(() => {
+            const previewWrap = document.querySelector('.preview-wrap');
+            if (previewWrap) previewWrap.scrollTop = 0;
+          }, 100);
         }
+      }
+
+      function showDocFallback(file) {
+        // For DOC/DOCX files, show a formatted info display
+        const infoDiv = document.createElement('div');
+        infoDiv.style.padding = '24px';
+        infoDiv.style.textAlign = 'center';
+        infoDiv.style.color = '#1a1a1a';
+        
+        const icon = document.createElement('div');
+        icon.innerHTML = '<i class="fas fa-file-word" style="font-size: 48px; color: #750d0d; margin-bottom: 12px;"></i>';
+        infoDiv.appendChild(icon);
+        
+        const fileName = document.createElement('div');
+        fileName.textContent = file.name;
+        fileName.style.fontWeight = '600';
+        fileName.style.fontSize = '14px';
+        fileName.style.marginBottom = '8px';
+        fileName.style.wordBreak = 'break-word';
+        infoDiv.appendChild(fileName);
+        
+        const fileSize = document.createElement('div');
+        fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+        fileSize.style.fontSize = '12px';
+        fileSize.style.color = '#6b7280';
+        fileSize.style.marginBottom = '16px';
+        infoDiv.appendChild(fileSize);
+        
+        const message = document.createElement('div');
+        message.textContent = 'Document preview is not available in the browser. The file will be sent as-is for printing.';
+        message.style.fontSize = '12px';
+        message.style.color = '#6b7280';
+        message.style.lineHeight = '1.5';
+        infoDiv.appendChild(message);
+        
+        paperInner.appendChild(infoDiv);
+        applyPreviewDims();
+        // Scroll to top after doc fallback displays
+        setTimeout(() => {
+          const previewWrap = document.querySelector('.preview-wrap');
+          if (previewWrap) previewWrap.scrollTop = 0;
+        }, 100);
       }
 
       function renderPdfThumbnails(){
@@ -805,6 +1455,11 @@
             paperInner.appendChild(c);
             applyPreviewDims();
             highlightThumb();
+            // Scroll to top after PDF page renders
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
           });
         });
       }
@@ -867,31 +1522,24 @@
         <div class="dotmatrix-lines" aria-hidden="true"></div>
         <div class="paper-header">
           <strong>Compose</strong>
-          <div class="controls">
-            <button type="button" onclick="window.location.href='inbox.php'" title="Go to inbox">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M22 6L12 13L2 6" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              INBOX
-            </button>
-          </div>
         </div>
 
         
 
-        <div class="section">
+        <div class="section compose-section">
           <form onsubmit="sendEmail(event)" enctype="multipart/form-data">
             <div class="field">
+              <label for="to_email">To</label>
+              <input id="to_email" name="to_email" type="email" value="iskoprint6@gmail.com" readonly class="readonly-field" />
+            </div>
+            <div class="field">
               <label for="subject">Subject</label>
-              <input id="subject" name="subject" type="text" placeholder="Enter subject" />
+              <input id="subject" name="subject" type="text" placeholder="Add a subject" />
             </div>
             <div class="field">
-              <label for="message">Message</label>
-              <textarea id="message" name="message" placeholder="Type your message..."></textarea>
+              <textarea id="message" name="message" placeholder="Compose email..." rows="10"></textarea>
             </div>
             <div class="field">
-              <label for="file_upload">Attach File/Photo</label>
               <div class="file-upload-wrapper">
                 <input id="file_upload" name="file_upload" type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple />
                 <label for="file_upload" class="file-upload-area">
@@ -901,8 +1549,11 @@
                   <div class="file-upload-text">Click to upload files or drag and drop</div>
                   <div class="file-upload-subtext">Images, PDF, DOC, DOCX, TXT files</div>
                   <div class="file-info" id="file-info" style="display: none;">
+                    <div class="file-info-header">
                     <i class="fas fa-paperclip"></i>
                     <span id="file-count">0 files selected</span>
+                    </div>
+                    <div class="file-names-list" id="file-names-list"></div>
                   </div>
                 </label>
               </div>
@@ -910,7 +1561,7 @@
             <div class="compose-actions">
               <span id="ticker" class="ticker" aria-live="polite">Ready.</span>
               <div class="controls">
-                <button type="reset">
+                <button type="button" onclick="clearFiles()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 12a8 8 0 1 0 2.343-5.657" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round"/>
                     <path d="M4 7v5h5" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round"/>
@@ -989,6 +1640,18 @@
             </div>
             <div class="preview-wrap">
               <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out" aria-label="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-btn" onclick="zoomIn()" title="Zoom In" aria-label="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom" aria-label="Reset Zoom">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
                 <div id="paper-inner" class="paper-inner"></div>
               </div>
             </div>

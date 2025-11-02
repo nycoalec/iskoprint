@@ -15,7 +15,7 @@ $currentUser = $auth->getCurrentUser();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inbox - Print Shop</title>
+    <title>Inbox - IskPrint</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -26,418 +26,528 @@ $currentUser = $auth->getCurrentUser();
 
         body {
             margin: 0;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             color: #1a1a1a;
-            background: linear-gradient(180deg, rgba(255,249,249,0.8) 0%, rgba(251,238,238,0.8) 100%), 
-                        url('assets/pup_bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: #ffffff;
             min-height: 100vh;
         }
 
-        .app {
-            max-width: 1100px;
-            margin: 32px auto;
-            padding: 0 16px;
-        }
-
-        .printer {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.08), inset 0 -2px 0 #f0f0f0;
-            padding: 24px;
-            position: relative;
-        }
-
-        .paper {
-            position: relative;
-        }
-
-        .dotmatrix-lines {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: repeating-linear-gradient(
-                transparent,
-                transparent 24px,
-                #e0e0e0 24px,
-                #e0e0e0 25px
-            );
-            pointer-events: none;
-            opacity: 0.3;
-        }
-
-        .paper-header {
+        .email-app {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px dotted #d4a574;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .paper-header strong {
-            font-size: 18px;
-            font-weight: bold;
-            color: #750d0d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .printer-head {
-            margin-bottom: 20px;
+        /* Top Header Bar */
+        .top-header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #ffffff;
+            z-index: 100;
         }
 
-        .logo {
-            display: inline-flex;
+        .header-left {
+            display: flex;
             align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: inherit;
-            white-space: nowrap;
+            gap: 16px;
         }
 
-        .logo img {
-            height: 45px;
+        .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-toggle:hover {
+            background: #f5f5f5;
+            border-radius: 50%;
+        }
+
+        .logo-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-header img {
+            height: 32px;
             width: auto;
         }
 
-        .printer-title {
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #750d0d;
-        }
-
-        .user-info {
-            display: flex;
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #e9ecef;
+            gap: 4px;
         }
 
-        .user-info i {
-            color: #3d4a66;
-        }
-
-        .user-info span {
-            color: #3d4a66;
-            font-weight: 500;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .controls button {
-            background: white;
-            border: 2px solid #3d4a66;
-            color: #3d4a66;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            display: flex;
+        .logo-star {
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
+            margin-left: -4px;
+            margin-right: -4px;
+            position: relative;
+            top: 1px;
         }
 
-        .controls button:hover {
-            background: #3d4a66;
-            color: white;
-        }
-
-        .section {
-            margin-top: 20px;
-        }
-
-        .inbox-nav {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px dotted #d4a574;
-        }
-
-        .nav-tab {
-            padding: 15px 25px;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            color: #3d4a66;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-tab.active {
-            background: white;
-            border-bottom-color: #3d4a66;
-            color: #3d4a66;
-        }
-
-        .nav-tab:hover {
-            background: #f8f9fa;
-        }
-
-        .email-list {
-            display: none;
-        }
-
-        .email-list.active {
+        .logo-star img {
+            width: 20px;
+            height: 20px;
             display: block;
         }
 
-        .email-item {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            padding: 20px;
-            background: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .search-bar {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 auto;
             position: relative;
         }
 
-        .email-item:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-            border-color: #3d4a66;
+        .search-bar input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            background: #f5f5f5;
+            outline: none;
+            transition: all 0.2s ease;
         }
 
-        /* Email details modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index: 1200; }
-        .modal-overlay.active { display:flex; }
-        .modal { width: 92%; max-width: 700px; background:#fff; border-radius:12px; box-shadow: 0 20px 60px rgba(0,0,0,.25); overflow:hidden; border:1px solid #e9ecef; }
-        .modal-header { display:flex; align-items:center; justify-content: space-between; padding:16px 18px; background:#750d0d; color:#fff; }
-        .modal-title { font-weight:700; letter-spacing:.4px; text-transform: uppercase; }
-        .modal-close { background:transparent; border:0; color:#fff; font-size:18px; cursor:pointer; }
-        .modal-body { padding:18px; }
-        .modal-row { margin-bottom:12px; }
-        .modal-label { font-size:12px; color:#6c757d; text-transform: uppercase; letter-spacing:.6px; display:block; margin-bottom:6px; }
-        .modal-value { color:#2c3e50; }
-        .modal-footer { padding: 0 18px 18px; display:flex; justify-content:flex-end; }
-        .btn { appearance:none; border:1px solid #e5e7eb; background:#f7f7f9; color:#333; border-radius:8px; padding:10px 14px; cursor:pointer; font-weight:600; }
-        .btn:hover { filter: brightness(.97); }
-
-        .email-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+        .search-bar input:focus {
+            background: #ffffff;
+            border-color: #750d0d;
+            box-shadow: 0 0 0 3px rgba(117, 13, 13, 0.1);
         }
 
-        .email-from {
-            font-weight: bold;
-            color: #3d4a66;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .email-date {
-            color: #6c757d;
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
             font-size: 14px;
         }
 
-        .email-subject {
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            background: none;
+            border: none;
             font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #666;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
         }
 
-        .email-preview {
-            color: #6c757d;
-            line-height: 1.5;
+        .header-icon:hover {
+            background: #f5f5f5;
         }
 
-        .email-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 15px;
+        .profile-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #750d0d 0%, #5d0a0a 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 240px;
+            background: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .nav-menu {
+            padding: 8px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: #f5f5f5;
+        }
+
+        .nav-item.active {
+            background: #fff5f5;
+            color: #750d0d;
+            font-weight: 600;
+        }
+
+        .nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-count {
+            background: #e0e0e0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 12px;
             font-size: 12px;
-            font-weight: bold;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
-        .status-sent {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .nav-item.active .nav-count {
+            background: #750d0d;
+            color: white;
         }
 
-        .status-received {
-            background: #cce5ff;
-            color: #004085;
-            border: 1px solid #b3d7ff;
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .content-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .email-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            position: relative;
+        }
+
+        .email-tab {
+            display: none;
+        }
+
+        .email-tab.active {
+            display: block;
+            height: 100%;
         }
 
         .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            color: #999;
         }
 
-        .empty-state i {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-            color: #3d4a66;
+        .empty-state-icon {
+            font-size: 80px;
+            color: #e0e0e0;
+            margin-bottom: 24px;
         }
 
         .empty-state h3 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #3d4a66;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
         }
 
         .empty-state p {
-            font-size: 16px;
-            line-height: 1.5;
+            font-size: 14px;
+            color: #999;
         }
 
-        .back-btn {
-            background: #3d4a66;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: background 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .back-btn:hover {
-            background: #2c3e50;
-        }
-
-        .compose-actions {
+        /* Email Item Styles */
+        .email-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px dotted #d4a574;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .ticker {
-            color: #3d4a66;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .email-item:hover {
+            background: #f9f9f9;
         }
 
+        .email-checkbox {
+            margin-right: 12px;
+        }
+
+        .email-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .email-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .email-from {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+
+        .email-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .email-subject {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .email-preview {
+            font-size: 13px;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Modal Styles (keeping existing) */
+        .modal-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.45); 
+            display:none; 
+            align-items:center; 
+            justify-content:center; 
+            z-index: 1200; 
+        }
+        .modal-overlay.active { display:flex; }
+        .modal { 
+            width: 92%; 
+            max-width: 700px; 
+            background:#fff; 
+            border-radius:12px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,.25); 
+            overflow:hidden; 
+            border:1px solid #e9ecef; 
+        }
+        .modal-header { 
+            display:flex; 
+            align-items:center; 
+            justify-content: space-between; 
+            padding:16px 18px; 
+            background:#750d0d; 
+            color:#fff; 
+        }
+        .modal-title { 
+            font-weight:700; 
+            letter-spacing:.4px; 
+            text-transform: uppercase; 
+        }
+        .modal-close { 
+            background:transparent; 
+            border:0; 
+            color:#fff; 
+            font-size:18px; 
+            cursor:pointer; 
+        }
+        .modal-body { padding:18px; }
+        .modal-row { margin-bottom:12px; }
+        .modal-label { 
+            font-size:12px; 
+            color:#6c757d; 
+            text-transform: uppercase; 
+            letter-spacing:.6px; 
+            display:block; 
+            margin-bottom:6px; 
+        }
+        .modal-value { color:#2c3e50; }
+        .modal-footer { 
+            padding: 0 18px 18px; 
+            display:flex; 
+            justify-content:flex-end; 
+        }
+        .btn { 
+            appearance:none; 
+            border:1px solid #e5e7eb; 
+            background:#f7f7f9; 
+            color:#333; 
+            border-radius:8px; 
+            padding:10px 14px; 
+            cursor:pointer; 
+            font-weight:600; 
+        }
+        .btn:hover { filter: brightness(.97); }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .paper-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .inbox-nav {
-                flex-wrap: wrap;
-            }
-            
-            .nav-tab {
-                flex: 1;
-                text-align: center;
+            .search-bar {
+                display: none;
             }
 
-            .compose-actions {
-                flex-direction: column;
-                gap: 15px;
+            .sidebar {
+                width: 200px;
+            }
+
+            .logo-text {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <div class="printer" role="region" aria-label="Printer Mail UI">
-            <div class="printer-head">
-                <a class="logo" href="index.php" title="Go to index">
-                    <img src="assets/logo.png" alt="Printer Logo" />
-                    <span class="printer-title">Inbox Console</span>
-                </a>
-                <div class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span><?php echo htmlspecialchars($currentUser['first_name'] . ' ' . $currentUser['last_name']); ?></span>
+    <div class="email-app">
+        <!-- Top Header Bar -->
+        <div class="top-header">
+            <div class="header-left">
+                <div class="logo-header">
+                    <img src="assets/logo.png" alt="IskPrint Logo" />
+                    <span class="logo-text">
+                        <span>Isk</span>
+                        <span class="logo-star" aria-hidden="true">
+                            <img src="assets/pup_star.png" alt="" />
+                        </span>
+                        <span>Print</span>
+                    </span>
+                </div>
+            </div>
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Search mail" />
+            </div>
+            <div class="header-right">
+                <div class="profile-icon">
+                    <?php echo strtoupper(substr($currentUser['first_name'], 0, 1)); ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <div class="nav-menu">
+                    <div class="nav-item active" onclick="showTab('inbox')">
+                        <div class="nav-item-left">
+                            <i class="fas fa-inbox"></i>
+                            <span>Inbox</span>
+                        </div>
+                        <span class="nav-count" id="inbox-count">0</span>
+                    </div>
+                    <div class="nav-item" onclick="showTab('sent')">
+                        <div class="nav-item-left">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Sent</span>
+                        </div>
+                        <span class="nav-count" id="sent-count">0</span>
+                    </div>
+                    <div class="nav-item" onclick="showTab('drafts')">
+                        <div class="nav-item-left">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Drafts</span>
+                        </div>
+                        <span class="nav-count" id="drafts-count">0</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="paper" role="document">
-                <div class="dotmatrix-lines" aria-hidden="true"></div>
-                <div class="paper-header">
-                    <strong>Inbox</strong>
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <div class="content-header">
+                    <h2 id="content-title">Inbox</h2>
                 </div>
-
-            <div class="section">
-                <div class="inbox-nav">
-                    <div class="nav-tab active" onclick="showTab('sent')">
-                        <i class="fas fa-paper-plane"></i> Sent Emails
-                    </div>
-                    <div class="nav-tab" onclick="showTab('received')">
-                        <i class="fas fa-inbox"></i> Received Emails
-                    </div>
-                </div>
-
-                <div id="sent" class="email-list active">
-                    <div class="empty-state">
-                        <i class="fas fa-paper-plane"></i>
-                        <h3>No Sent Emails Yet</h3>
-                        <p>Your sent emails will appear here once you start using our services.</p>
-                    </div>
-                </div>
-
-                <div id="received" class="email-list">
-                    <div id="received-emails">
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <h3>No Received Emails Yet</h3>
-                            <p>Emails from our admin team will appear here.</p>
+                <div class="email-list">
+                    <!-- Inbox Tab -->
+                    <div id="inbox" class="email-tab active">
+                        <div id="received-emails">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox empty-state-icon"></i>
+                                <h3>No emails yet</h3>
+                                <p>Your emails will appear here</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="compose-actions">
-                    <span class="ticker" aria-live="polite">Ready.</span>
-                    <div class="controls">
-                        <a href="index.php" class="back-btn">
-                            <i class="fas fa-arrow-left"></i> Back to Home
-                        </a>
+                    <!-- Sent Tab -->
+                    <div id="sent" class="email-tab">
+                        <div id="sent-emails">
+                            <div class="empty-state">
+                                <i class="fas fa-paper-plane empty-state-icon"></i>
+                                <h3>No emails yet</h3>
+                                <p>Your sent emails will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Drafts Tab -->
+                    <div id="drafts" class="email-tab">
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt empty-state-icon"></i>
+                            <h3>No drafts yet</h3>
+                            <p>Your draft emails will appear here</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 
     <!-- Email Details Modal -->
@@ -500,21 +610,76 @@ $currentUser = $auth->getCurrentUser();
         };
 
         function showTab(tabName) {
-            // Hide all email lists
-            document.querySelectorAll('.email-list').forEach(list => {
-                list.classList.remove('active');
-            });
-            
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
+            // Hide all email tabs
+            document.querySelectorAll('.email-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Show selected email list
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab
             document.getElementById(tabName).classList.add('active');
             
-            // Add active class to clicked nav tab
-            event.target.classList.add('active');
+            // Add active class to clicked nav item
+            event.currentTarget.classList.add('active');
+            
+            // Update content title
+            const titles = {
+                'inbox': 'Inbox',
+                'sent': 'Sent',
+                'drafts': 'Drafts'
+            };
+            document.getElementById('content-title').textContent = titles[tabName] || 'Inbox';
+            
+            // Update counts
+            updateCounts();
+        }
+
+        function updateCounts() {
+            const inboxEmails = document.querySelectorAll('#received-emails .email-item').length;
+            const sentEmails = document.querySelectorAll('#sent-emails .email-item').length;
+            
+            document.getElementById('inbox-count').textContent = inboxEmails;
+            document.getElementById('sent-count').textContent = sentEmails;
+            document.getElementById('drafts-count').textContent = '0';
+        }
+
+        // Function to create email item element
+        function createEmailItem(from, to, date, subject, preview, status) {
+            const emailItem = document.createElement('div');
+            emailItem.className = 'email-item';
+            emailItem.innerHTML = `
+                <div class="email-content">
+                    <div class="email-header-row">
+                        <span class="email-from">${from}</span>
+                        <span class="email-date">${date}</span>
+                    </div>
+                    <div class="email-subject">${subject}</div>
+                    <div class="email-preview">${preview}</div>
+                </div>
+            `;
+            
+            // Dataset for modal
+            emailItem.dataset.from = from;
+            emailItem.dataset.to = to;
+            emailItem.dataset.date = date;
+            emailItem.dataset.subject = subject;
+            emailItem.dataset.body = preview;
+            emailItem.dataset.status = status;
+            emailItem.setAttribute('role', 'button');
+            emailItem.setAttribute('tabindex', '0');
+            emailItem.addEventListener('click', () => openEmailModal(emailItem));
+            emailItem.addEventListener('keydown', (e) => { 
+                if (e.key === 'Enter' || e.key === ' ') { 
+                    e.preventDefault(); 
+                    openEmailModal(emailItem); 
+                } 
+            });
+            
+            return emailItem;
         }
 
         // Function to add a received email to the inbox
@@ -527,34 +692,30 @@ $currentUser = $auth->getCurrentUser();
                 emptyState.remove();
             }
             
-            // Create new email item
-            const emailItem = document.createElement('div');
-            emailItem.className = 'email-item';
             const bodyText = autoResponseMessages[serviceType] || 'Thank you for your service request! We have received your files and will process them as soon as possible.';
-            const dateText = new Date().toLocaleString();
-            emailItem.innerHTML = `
-                <div class="email-header">
-                    <div class="email-from">Isko Print Admin</div>
-                    <div class="email-date">${dateText}</div>
-                </div>
-                <div class="email-subject">✅ Confirmation: ${serviceNames[serviceType] || 'Service'} Request Received</div>
-                <div class="email-preview">${bodyText}</div>
-                <div class="email-status status-received">Received</div>
-            `;
-            // Dataset for modal
-            emailItem.dataset.from = 'Isko Print Admin';
-            emailItem.dataset.to = 'You';
-            emailItem.dataset.date = dateText;
-            emailItem.dataset.subject = `Confirmation: ${serviceNames[serviceType] || 'Service'} Request Received`;
-            emailItem.dataset.body = bodyText;
-            emailItem.dataset.status = 'Received';
-            emailItem.setAttribute('role', 'button');
-            emailItem.setAttribute('tabindex', '0');
-            emailItem.addEventListener('click', () => openEmailModal(emailItem));
-            emailItem.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEmailModal(emailItem); } });
+            const dateText = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            const subjectText = `✅ Confirmation: ${serviceNames[serviceType] || 'Service'} Request Received`;
+            
+            const emailItem = createEmailItem(
+                'Isko Print Admin',
+                'You',
+                dateText,
+                subjectText,
+                bodyText,
+                'Received'
+            );
             
             // Add to top of received emails
             receivedContainer.insertBefore(emailItem, receivedContainer.firstChild);
+            
+            // Update counts
+            updateCounts();
             
             // Show notification
             showNotification('New email received from admin!');
@@ -562,7 +723,7 @@ $currentUser = $auth->getCurrentUser();
 
         // Function to add a sent email to the sent list
         function addSentEmail(serviceType, subject) {
-            const sentContainer = document.getElementById('sent');
+            const sentContainer = document.getElementById('sent-emails');
             const emptyState = sentContainer.querySelector('.empty-state');
             
             // Remove empty state if it exists
@@ -570,35 +731,30 @@ $currentUser = $auth->getCurrentUser();
                 emptyState.remove();
             }
             
-            // Create new email item
-            const emailItem = document.createElement('div');
-            emailItem.className = 'email-item';
-            const dateText = new Date().toLocaleString();
+            const dateText = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
             const subjText = `[${serviceNames[serviceType] || 'Service'}] ${subject}`;
             const bodyText = 'Service request sent to admin';
-            emailItem.innerHTML = `
-                <div class="email-header">
-                    <div class="email-from">You</div>
-                    <div class="email-date">${dateText}</div>
-                </div>
-                <div class="email-subject">${subjText}</div>
-                <div class="email-preview">${bodyText}</div>
-                <div class="email-status status-sent">Sent</div>
-            `;
-            // Dataset for modal
-            emailItem.dataset.from = 'You';
-            emailItem.dataset.to = 'Isko Print Admin';
-            emailItem.dataset.date = dateText;
-            emailItem.dataset.subject = subjText;
-            emailItem.dataset.body = bodyText;
-            emailItem.dataset.status = 'Sent';
-            emailItem.setAttribute('role', 'button');
-            emailItem.setAttribute('tabindex', '0');
-            emailItem.addEventListener('click', () => openEmailModal(emailItem));
-            emailItem.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEmailModal(emailItem); } });
+            
+            const emailItem = createEmailItem(
+                'You',
+                'Isko Print Admin',
+                dateText,
+                subjText,
+                bodyText,
+                'Sent'
+            );
             
             // Add to top of sent emails
             sentContainer.insertBefore(emailItem, sentContainer.firstChild);
+            
+            // Update counts
+            updateCounts();
         }
 
         // Modal helpers
@@ -630,16 +786,13 @@ $currentUser = $auth->getCurrentUser();
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: #28a745;
+                background: #750d0d;
                 color: white;
                 padding: 15px 20px;
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 z-index: 1000;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-                font-weight: bold;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                font-weight: 600;
                 animation: slideIn 0.3s ease;
             `;
             notification.textContent = message;
@@ -680,6 +833,9 @@ $currentUser = $auth->getCurrentUser();
             
             // Clear the recent emails after processing
             localStorage.removeItem('recentEmails');
+            
+            // Update counts
+            updateCounts();
         }
 
         // Listen for email submissions from other pages
@@ -698,6 +854,7 @@ $currentUser = $auth->getCurrentUser();
         // Initialize inbox on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkForRecentEmails();
+            updateCounts();
         });
     </script>
 </body>

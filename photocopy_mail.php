@@ -9,9 +9,10 @@
   <title>Laminate Mail UI</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <style>
     :root {
-      --paper: #fffef8;
+      --paper: #ffffff;
       --ink: #1a1a1a;
       --maroon: #750d0d;
       --maroon-dark: #5d0a0a;
@@ -91,11 +92,11 @@
     .paper {
       background: var(--paper);
       margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 1px 0 #f1f1f1, 0 10px 30px var(--shadow);
+      border-radius: 0;
+      box-shadow: none;
       position: relative;
       overflow: hidden;
-      border: 1px solid #eee;
+      border: none;
     }
 
     .paper::before, .paper::after {
@@ -201,6 +202,46 @@
       padding: 8px 0;
     }
 
+    /* Override for compose section */
+    .compose-section {
+      background: #ffffff;
+      border-radius: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .compose-section .field {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .compose-section .field:has(textarea:not([aria-label])) {
+      grid-template-columns: 1fr;
+    }
+
+    .compose-section .field:has(textarea) {
+      align-items: start;
+    }
+
+    .compose-section .field:last-of-type {
+      border-bottom: none;
+      padding-top: 16px;
+    }
+
+    .compose-section .field label {
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+      padding-top: 0;
+      text-align: left;
+    }
+
     .field label {
       color: var(--muted);
       text-transform: uppercase;
@@ -221,10 +262,43 @@
       box-shadow: inset 0 1px 0 #f7f9fc;
     }
 
+    .compose-section input[type="text"], .compose-section input[type="email"], .compose-section textarea {
+      border: none;
+      background: transparent;
+      border-radius: 0;
+      padding: 8px 0;
+      box-shadow: none;
+      color: #333;
+    }
+
+    .compose-section input[type="text"]::placeholder, .compose-section input[type="email"]::placeholder, .compose-section textarea::placeholder {
+      color: #999;
+    }
+
+    .readonly-field {
+      color: #666;
+      cursor: default;
+      background: #f9f9f9;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+
     textarea { min-height: 160px; resize: vertical; }
+
+    .compose-section textarea {
+      min-height: 200px;
+      padding: 16px 0;
+      line-height: 1.6;
+    }
 
     .file-upload-wrapper {
       position: relative;
+    }
+
+    .compose-section .file-upload-wrapper {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
     }
     
     input[type="file"] {
@@ -252,11 +326,28 @@
       justify-content: center;
       gap: 8px;
     }
+
+    .compose-section .file-upload-area {
+      width: 100%;
+      max-width: 600px;
+      border: 2px dashed #ccc;
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 32px 24px;
+      min-height: 120px;
+      gap: 12px;
+    }
     
     .file-upload-area:hover {
       border-color: var(--maroon);
       background: #fef2f2;
       transform: translateY(-1px);
+    }
+
+    .compose-section .file-upload-area:hover {
+      border-color: #999;
+      background: #f5f5f5;
+      transform: none;
     }
     
     .file-upload-area.dragover {
@@ -264,11 +355,23 @@
       background: #fef2f2;
       transform: scale(1.02);
     }
+
+    .compose-section .file-upload-area.dragover {
+      border-color: #666;
+      background: #f0f0f0;
+      transform: none;
+    }
     
     .file-upload-icon {
       font-size: 24px;
       color: var(--maroon);
       margin-bottom: 8px;
+    }
+
+    .compose-section .file-upload-icon {
+      font-size: 32px;
+      color: #666;
+      margin-bottom: 4px;
     }
     
     .file-upload-text {
@@ -277,10 +380,79 @@
       color: var(--maroon);
       margin-bottom: 4px;
     }
+
+    .compose-section .file-upload-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     
     .file-upload-subtext {
       font-size: 12px;
       color: var(--muted);
+    }
+
+    .compose-section .file-upload-subtext {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .file-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #d1d5db;
+      width: 100%;
+    }
+    
+    .file-info-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--maroon);
+      font-weight: 600;
+    }
+    
+    .file-names-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    
+    .file-name-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #f9fafb;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--ink);
+    }
+    
+    .file-name-item i {
+      color: var(--maroon);
+      font-size: 11px;
+    }
+    
+    .file-name-text {
+      flex: 1;
+      word-break: break-all;
     }
     
     .ticker.error {
@@ -392,10 +564,51 @@
     .tool { display:grid; grid-template-columns: 140px 1fr; align-items:center; gap:8px; padding:6px 0; }
     .tool label { font-size:12px; text-transform:uppercase; color:#6b7280; letter-spacing:.6px; }
     .tool input[type="number"], .tool select { width:100%; padding:8px 10px; border:1px solid #e3e6ef; border-radius:8px; }
-    .preview-wrap { background:#f9fafb; border:1px dashed #d1d5db; border-radius:12px; padding:16px; display:flex; justify-content:center; align-items:center; }
-    .paper-canvas { background:#ffffff; position:relative; box-shadow:0 12px 40px rgba(0,0,0,.08); border:1px solid #eee; overflow:hidden; }
-    .paper-inner { width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; box-sizing: border-box; }
-    .paper-inner img { display:block; max-width:none; max-height:none; }
+    .preview-wrap { 
+      background:#f9fafb; 
+      border:1px dashed #d1d5db; 
+      border-radius:12px; 
+      padding:16px; 
+      display:flex; 
+      justify-content:center; 
+      align-items:flex-start; 
+      min-height: 500px;
+      max-height: 600px;
+      overflow: auto;
+    }
+    .paper-canvas { 
+      background:#ffffff; 
+      position:relative; 
+      box-shadow:0 12px 40px rgba(0,0,0,.08); 
+      border:1px solid #eee; 
+      overflow: visible; 
+      min-height: 400px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .paper-inner { 
+      width:100%; 
+      min-height: 100%;
+      display:flex; 
+      align-items:flex-start; 
+      justify-content:center; 
+      position:relative; 
+      overflow: visible; 
+      box-sizing: border-box; 
+      padding: 10px 20px;
+    }
+    .paper-inner img { display:block; max-width:100%; height:auto; }
+    .paper-inner canvas { max-width:100%; height:auto; display:block; }
+    .paper-inner div {
+      width: 100%;
+      max-width: 100%;
+    }
+    .paper-inner pre {
+      width: 100%;
+      max-width: 100%;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
     .paper-inner embed, .paper-inner object { width:100%; height:100%; border:0; }
     .thumbs { display:flex; gap:10px; overflow:auto; padding:10px 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); }
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
@@ -408,12 +621,58 @@
       const fileInput = document.getElementById('file_upload');
       const fileInfo = document.getElementById('file-info');
       const fileCount = document.getElementById('file-count');
+      const fileNamesList = document.getElementById('file-names-list');
+      const files = fileInput.files;
       
-      if (fileInput.files.length > 0) {
+      if (files.length > 0) {
         fileInfo.style.display = 'flex';
-        fileCount.textContent = `${fileInput.files.length} file(s) selected`;
+        fileCount.textContent = `${files.length} FILE(S) SELECTED`;
+        
+        // Clear existing file names
+        fileNamesList.innerHTML = '';
+        
+        // Display each file name
+        for (let i = 0; i < files.length; i++) {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-name-item';
+          fileItem.innerHTML = `
+            <i class="fas fa-file"></i>
+            <span class="file-name-text">${files[i].name}</span>
+            <small style="color: var(--muted); font-size: 10px;">${formatFileSize(files[i].size)}</small>
+          `;
+          fileNamesList.appendChild(fileItem);
+        }
       } else {
         fileInfo.style.display = 'none';
+        fileNamesList.innerHTML = '';
+      }
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    function clearFiles() {
+      const fileInput = document.getElementById('file_upload');
+      const fileInfo = document.getElementById('file-info');
+      const fileNamesList = document.getElementById('file-names-list');
+      
+      if (fileInput) {
+        fileInput.value = '';
+        updateFileCount();
+      }
+      
+      // Also clear preview if it exists
+      const previewWrap = document.querySelector('.preview-wrap');
+      if (previewWrap) {
+        const paperInner = previewWrap.querySelector('.paper-inner');
+        if (paperInner) {
+          paperInner.innerHTML = '';
+        }
       }
     }
 
@@ -489,27 +748,20 @@
       // Include print settings
       try {
         const copiesEl = document.getElementById('ctl-copies');
-        const duplexEl = document.getElementById('ctl-duplex');
         const paperEl = document.getElementById('ctl-paper');
-        const orientEl = document.getElementById('ctl-orientation');
-        const topEl = document.getElementById('ctl-top');
-        const rightEl = document.getElementById('ctl-right');
-        const bottomEl = document.getElementById('ctl-bottom');
-        const leftEl = document.getElementById('ctl-left');
-        const scaleEl = document.getElementById('ctl-scale');
-        const fitEl = document.getElementById('ctl-fit');
         const colorEl = document.getElementById('ctl-color');
         if (copiesEl) formData.append('copies', Math.max(1, parseInt(copiesEl.value||'1',10)));
-        if (duplexEl) formData.append('duplex', duplexEl.value);
         if (paperEl) formData.append('paper', paperEl.value);
-        if (orientEl) formData.append('orientation', orientEl.value);
-        if (topEl) formData.append('margin_top_mm', topEl.value);
-        if (rightEl) formData.append('margin_right_mm', rightEl.value);
-        if (bottomEl) formData.append('margin_bottom_mm', bottomEl.value);
-        if (leftEl) formData.append('margin_left_mm', leftEl.value);
-        if (scaleEl) formData.append('scale_percent', scaleEl.value);
-        if (fitEl) formData.append('fit_mode', fitEl.value);
         if (colorEl) formData.append('color_mode', colorEl.value);
+        // Default values for print settings
+        formData.append('duplex', 'single');
+        formData.append('orientation', 'portrait');
+        formData.append('margin_top_mm', '10');
+        formData.append('margin_right_mm', '10');
+        formData.append('margin_bottom_mm', '10');
+        formData.append('margin_left_mm', '10');
+        formData.append('scale_percent', '100');
+        formData.append('fit_mode', 'Shrink oversized pages');
       } catch (e) {}
       
       // Add files
@@ -577,6 +829,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       const fileInput = document.getElementById('file_upload');
       const fileUploadArea = document.querySelector('.file-upload-area');
+      const form = document.querySelector('form');
       
       if (fileInput) {
         fileInput.addEventListener('change', updateFileCount);
@@ -587,20 +840,28 @@
         fileUploadArea.addEventListener('dragleave', handleDragLeave);
         fileUploadArea.addEventListener('drop', handleDrop);
       }
+      
+      // Handle form reset to clear files display
+      if (form) {
+        form.addEventListener('reset', function(e) {
+          // Small delay to ensure form reset completes first
+          setTimeout(clearFiles, 0);
+        });
+      }
 
       // Live Preview wiring
       const controls = {
         paper: document.getElementById('ctl-paper'),
-        orientation: document.getElementById('ctl-orientation'),
-        top: document.getElementById('ctl-top'),
-        right: document.getElementById('ctl-right'),
-        bottom: document.getElementById('ctl-bottom'),
-        left: document.getElementById('ctl-left'),
-        scale: document.getElementById('ctl-scale'),
-        fit: document.getElementById('ctl-fit'),
+        orientation: { value: 'portrait' }, // Default
+        top: { value: '10' }, // Default
+        right: { value: '10' }, // Default
+        bottom: { value: '10' }, // Default
+        left: { value: '10' }, // Default
+        scale: { value: '100' }, // Default
+        fit: { value: 'Shrink oversized pages' }, // Default
         color: document.getElementById('ctl-color'),
-        copies: document.getElementById('ctl-copies'),
-        duplex: document.getElementById('ctl-duplex'),
+        copies: { value: '1' }, // Default
+        duplex: { value: 'single' }, // Default
       };
       const canvas = document.getElementById('paper-canvas');
       const paperInner = document.getElementById('paper-inner');
@@ -621,52 +882,90 @@
       }
 
       function applyPreviewDims(){
-        const size = paperSizePx(controls.paper.value);
-        const landscape = controls.orientation.value === 'landscape';
-        const pageWmm = landscape ? size.h : size.w;
-        const pageHmm = landscape ? size.w : size.h;
-        const maxScreenW = 520;
-        const displayScale = Math.min(1, maxScreenW / pageWmm);
-        const canvasWpx = Math.round(pageWmm * displayScale);
-        const canvasHpx = Math.round(pageHmm * displayScale);
-        canvas.style.width = canvasWpx + 'px';
-        canvas.style.height = canvasHpx + 'px';
-        const padTop = Math.max(0, mmToPx(parseFloat(controls.top.value||'0')) * displayScale);
-        const padRight = Math.max(0, mmToPx(parseFloat(controls.right.value||'0')) * displayScale);
-        const padBottom = Math.max(0, mmToPx(parseFloat(controls.bottom.value||'0')) * displayScale);
-        const padLeft = Math.max(0, mmToPx(parseFloat(controls.left.value||'0')) * displayScale);
-        paperInner.style.padding = `${padTop}px ${padRight}px ${padBottom}px ${padLeft}px`;
-
-        const innerW = canvasWpx - padLeft - padRight;
-        const innerH = canvasHpx - padTop - padBottom;
         const content = paperInner.firstElementChild;
-        if (!content) return;
+        if (!content) {
+          const size = paperSizePx('A4');
+          const maxScreenW = 520;
+          const displayScale = Math.min(1, maxScreenW / size.w);
+          canvas.style.width = Math.round(size.w * displayScale) + 'px';
+          canvas.style.minHeight = Math.round(size.h * displayScale) + 'px';
+          canvas.style.height = 'auto';
+          paperInner.style.padding = '10px 20px';
+          return;
+        }
+
         content.style.transformOrigin = 'center center';
         content.style.transform = 'none';
-        if (controls.color.value === 'grayscale') content.style.filter = 'grayscale(100%)';
-        else if (controls.color.value === 'bw') content.style.filter = 'grayscale(100%) contrast(160%) brightness(110%)';
-        else content.style.filter = 'none';
-        if (content.tagName.toLowerCase() === 'img') {
-          const naturalW = content.naturalWidth || innerW;
-          const naturalH = content.naturalHeight || innerH;
-          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
-          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
-          let pct = parseInt(controls.scale.value || '100', 10) / 100;
-          if (fitMode.includes('fit to printable')) pct = scaleToFit;
-          else if (fitMode.includes('shrink')) pct = Math.min(pct, scaleToFit);
-          content.style.width = naturalW + 'px';
+
+        const colorValue = controls.color ? controls.color.value : 'color';
+        if (colorValue === 'grayscale') {
+          content.style.filter = 'grayscale(100%)';
+        } else if (colorValue === 'bw') {
+          content.style.filter = 'grayscale(100%) contrast(160%) brightness(110%)';
+        } else {
+          content.style.filter = 'none';
+        }
+
+        const maxScreenW = 600;
+        let contentW, contentH;
+        let padding = 20;
+
+        if (content.tagName.toLowerCase() === 'div') {
+          content.style.width = 'auto';
+          content.style.maxWidth = maxScreenW - (padding * 2) + 'px';
+          content.style.margin = '0';
+          content.style.display = 'block';
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        } else if (content.tagName.toLowerCase() === 'pre') {
+          content.style.width = 'auto';
+          content.style.maxWidth = maxScreenW - (padding * 2) + 'px';
+          content.style.margin = '0';
+          content.style.display = 'block';
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        } else if (content.tagName.toLowerCase() === 'img') {
+          contentW = content.naturalWidth || content.width || maxScreenW;
+          contentH = content.naturalHeight || content.height || 600;
+          if (contentW > maxScreenW) {
+            const scale = maxScreenW / contentW;
+            contentW = maxScreenW;
+            contentH = contentH * scale;
+          }
+          content.style.width = contentW + 'px';
           content.style.height = 'auto';
-          content.style.transform = `scale(${pct})`;
+          content.style.maxWidth = '100%';
+          content.style.transform = 'none';
         } else if (content.tagName.toLowerCase() === 'canvas') {
-          const fitMode = (controls.fit.value || 'Actual size').toLowerCase();
-          const naturalW = content.width;
-          const naturalH = content.height;
-          const scaleToFit = Math.min(innerW / naturalW, innerH / naturalH);
-          let pct = parseInt(controls.scale.value || '100', 10) / 100;
-          if (fitMode.includes('fit to printable')) pct = scaleToFit;
-          else if (fitMode.includes('shrink')) pct = Math.min(pct, scaleToFit);
-          content.style.transform = `scale(${pct})`;
-          content.style.transformOrigin = 'center center';
+          contentW = content.width || maxScreenW;
+          contentH = content.height || 800;
+          if (contentW > maxScreenW) {
+            const scale = maxScreenW / contentW;
+            contentW = maxScreenW;
+            contentH = contentH * scale;
+          }
+          content.style.maxWidth = '100%';
+          content.style.height = 'auto';
+          content.style.transform = 'none';
+        } else {
+          void content.offsetWidth;
+          contentW = Math.max(content.scrollWidth || content.offsetWidth || maxScreenW - (padding * 2), 300);
+          contentH = Math.max(content.scrollHeight || content.offsetHeight || 400, 200);
+        }
+
+        const canvasW = Math.min(contentW + (padding * 2), maxScreenW);
+        const canvasH = contentH + (padding * 2);
+        
+        canvas.style.width = canvasW + 'px';
+        canvas.style.minHeight = canvasH + 'px';
+        canvas.style.height = 'auto';
+        paperInner.style.padding = padding + 'px';
+        
+        if (content.tagName.toLowerCase() === 'div' || content.tagName.toLowerCase() === 'pre') {
+          content.style.maxWidth = (canvasW - (padding * 2)) + 'px';
+          content.style.width = '100%';
         }
       }
 
@@ -680,9 +979,19 @@
         paperInner.innerHTML = '';
         thumbs.style.display = 'none';
         thumbs.innerHTML = '';
+        
+        const previewWrap = document.querySelector('.preview-wrap');
+        if (previewWrap) previewWrap.scrollTop = 0;
+        
         if (file.type.startsWith('image/')) {
           const img = new Image();
-          img.onload = () => applyPreviewDims();
+          img.onload = () => {
+            applyPreviewDims();
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
+          };
           img.src = url;
           paperInner.appendChild(img);
         } else if (file.type === 'application/pdf') {
@@ -690,14 +999,174 @@
             pdfDoc = doc; currentPdfPage = 1; thumbs.style.display = 'flex';
             renderPdfThumbnails();
             renderPdfPage(currentPdfPage);
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
+          }).catch(error => {
+            console.error('PDF load error:', error);
+            const note = document.createElement('div');
+            note.textContent = 'Unable to preview PDF. The file will still be sent.';
+            note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
+            paperInner.appendChild(note);
+            applyPreviewDims();
           });
+        } else if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const textContent = e.target.result;
+            const pre = document.createElement('pre');
+            pre.style.fontFamily = 'monospace';
+            pre.style.fontSize = '12px';
+            pre.style.padding = '16px';
+            pre.style.margin = '0';
+            pre.style.whiteSpace = 'pre-wrap';
+            pre.style.wordWrap = 'break-word';
+            pre.style.color = '#1a1a1a';
+            pre.style.backgroundColor = '#ffffff';
+            pre.style.maxHeight = '100%';
+            pre.style.overflow = 'auto';
+            pre.textContent = textContent;
+            paperInner.appendChild(pre);
+            applyPreviewDims();
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
+          };
+          reader.onerror = function() {
+            const note = document.createElement('div');
+            note.textContent = 'Unable to read text file. The file will still be sent.';
+            note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
+            paperInner.appendChild(note);
+            applyPreviewDims();
+          };
+          reader.readAsText(file);
+        } else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) {
+          if (file.name.toLowerCase().endsWith('.docx') && typeof mammoth !== 'undefined') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const arrayBuffer = e.target.result;
+               mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                 .then(function(result) {
+                   const previewDiv = document.createElement('div');
+                   previewDiv.style.padding = '16px';
+                   previewDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+                   previewDiv.style.fontSize = '14px';
+                   previewDiv.style.lineHeight = '1.6';
+                   previewDiv.style.color = '#1a1a1a';
+                   previewDiv.style.width = '100%';
+                   previewDiv.style.minHeight = 'auto';
+                   previewDiv.style.backgroundColor = '#ffffff';
+                   previewDiv.style.boxSizing = 'border-box';
+                   previewDiv.innerHTML = result.value;
+                   previewDiv.querySelectorAll('p').forEach(p => {
+                     p.style.margin = '0 0 8px 0';
+                     p.style.maxWidth = '100%';
+                     p.style.wordWrap = 'break-word';
+                   });
+                   previewDiv.querySelectorAll('table').forEach(table => {
+                     table.style.width = '100%';
+                     table.style.maxWidth = '100%';
+                     table.style.borderCollapse = 'collapse';
+                     table.style.margin = '8px 0';
+                     table.style.wordWrap = 'break-word';
+                   });
+                   previewDiv.querySelectorAll('*').forEach(el => {
+                     el.style.maxWidth = '100%';
+                     if (el.tagName === 'IMG') {
+                       el.style.maxWidth = '100%';
+                       el.style.height = 'auto';
+                     }
+                   });
+                  paperInner.appendChild(previewDiv);
+                  applyPreviewDims();
+                  setTimeout(() => {
+                    const previewWrap = document.querySelector('.preview-wrap');
+                    if (previewWrap) previewWrap.scrollTop = 0;
+                  }, 100);
+                 })
+                .catch(function(error) {
+                  console.error('Error converting DOCX:', error);
+                  showDocFallback(file);
+                });
+            };
+            reader.onerror = function() {
+              showDocFallback(file);
+            };
+            reader.readAsArrayBuffer(file);
+          } else {
+            showDocFallback(file);
+          }
         } else {
-          const note = document.createElement('div');
-          note.textContent = 'Preview not available for this file type. The file will still be sent.';
-          note.style.fontSize = '12px'; note.style.color = '#6b7280'; note.style.textAlign = 'center';
-          paperInner.appendChild(note);
+          const infoDiv = document.createElement('div');
+          infoDiv.style.padding = '24px';
+          infoDiv.style.textAlign = 'center';
+          infoDiv.style.color = '#1a1a1a';
+          const icon = document.createElement('div');
+          icon.innerHTML = '<i class="fas fa-file" style="font-size: 48px; color: #750d0d; margin-bottom: 12px;"></i>';
+          infoDiv.appendChild(icon);
+          const fileName = document.createElement('div');
+          fileName.textContent = file.name;
+          fileName.style.fontWeight = '600';
+          fileName.style.fontSize = '14px';
+          fileName.style.marginBottom = '8px';
+          fileName.style.wordBreak = 'break-word';
+          infoDiv.appendChild(fileName);
+          const fileSize = document.createElement('div');
+          fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+          fileSize.style.fontSize = '12px';
+          fileSize.style.color = '#6b7280';
+          fileSize.style.marginBottom = '16px';
+          infoDiv.appendChild(fileSize);
+          const message = document.createElement('div');
+          message.textContent = 'Preview not available for this file type. The file will still be sent.';
+          message.style.fontSize = '12px';
+          message.style.color = '#6b7280';
+          message.style.lineHeight = '1.5';
+          infoDiv.appendChild(message);
+          paperInner.appendChild(infoDiv);
           applyPreviewDims();
+          setTimeout(() => {
+            const previewWrap = document.querySelector('.preview-wrap');
+            if (previewWrap) previewWrap.scrollTop = 0;
+          }, 100);
         }
+      }
+
+      function showDocFallback(file) {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.padding = '24px';
+        infoDiv.style.textAlign = 'center';
+        infoDiv.style.color = '#1a1a1a';
+        const icon = document.createElement('div');
+        icon.innerHTML = '<i class="fas fa-file-word" style="font-size: 48px; color: #750d0d; margin-bottom: 12px;"></i>';
+        infoDiv.appendChild(icon);
+        const fileName = document.createElement('div');
+        fileName.textContent = file.name;
+        fileName.style.fontWeight = '600';
+        fileName.style.fontSize = '14px';
+        fileName.style.marginBottom = '8px';
+        fileName.style.wordBreak = 'break-word';
+        infoDiv.appendChild(fileName);
+        const fileSize = document.createElement('div');
+        fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+        fileSize.style.fontSize = '12px';
+        fileSize.style.color = '#6b7280';
+        fileSize.style.marginBottom = '16px';
+        infoDiv.appendChild(fileSize);
+        const message = document.createElement('div');
+        message.textContent = 'Document preview is not available in the browser. The file will be sent as-is for printing.';
+        message.style.fontSize = '12px';
+        message.style.color = '#6b7280';
+        message.style.lineHeight = '1.5';
+        infoDiv.appendChild(message);
+        paperInner.appendChild(infoDiv);
+        applyPreviewDims();
+        setTimeout(() => {
+          const previewWrap = document.querySelector('.preview-wrap');
+          if (previewWrap) previewWrap.scrollTop = 0;
+        }, 100);
       }
 
       function renderPdfThumbnails(){
@@ -743,19 +1212,23 @@
             paperInner.appendChild(c);
             applyPreviewDims();
             highlightThumb();
+            setTimeout(() => {
+              const previewWrap = document.querySelector('.preview-wrap');
+              if (previewWrap) previewWrap.scrollTop = 0;
+            }, 100);
           });
         });
       }
 
       window.openPrintPreview = function openPrintPreview(){
-        const size = paperSizePx(controls.paper.value);
-        const landscape = controls.orientation.value === 'landscape';
+        const size = paperSizePx(controls.paper ? controls.paper.value : 'A4');
+        const landscape = (controls.orientation ? controls.orientation.value : 'portrait') === 'landscape';
         const pageWmm = landscape ? size.h : size.w;
         const pageHmm = landscape ? size.w : size.h;
-        const mTop = parseFloat(controls.top.value||'0');
-        const mRight = parseFloat(controls.right.value||'0');
-        const mBottom = parseFloat(controls.bottom.value||'0');
-        const mLeft = parseFloat(controls.left.value||'0');
+        const mTop = parseFloat((controls.top ? controls.top.value : '10')||'10');
+        const mRight = parseFloat((controls.right ? controls.right.value : '10')||'10');
+        const mBottom = parseFloat((controls.bottom ? controls.bottom.value : '10')||'10');
+        const mLeft = parseFloat((controls.left ? controls.left.value : '10')||'10');
 
         const win = window.open('', '_blank');
         const style = `@page { size: ${pageWmm}mm ${pageHmm}mm; margin: 0; } body{ margin:0; } .page{ width:${pageWmm}mm; height:${pageHmm}mm; box-sizing:border-box; padding:${mTop}mm ${mRight}mm ${mBottom}mm ${mLeft}mm; display:flex; align-items:center; justify-content:center; } img{ max-width:100%; max-height:100%; } canvas{ max-width:100%; max-height:100%; }`;
@@ -781,7 +1254,9 @@
       }
 
       if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); });
-      Object.values(controls).forEach(ctrl => ctrl && ctrl.addEventListener('input', applyPreviewDims));
+      // Only add listeners to actual control elements
+      if (controls.paper) controls.paper.addEventListener('change', applyPreviewDims);
+      if (controls.color) controls.color.addEventListener('change', applyPreviewDims);
       applyPreviewDims();
     });
 
@@ -801,29 +1276,22 @@
         <div class="dotmatrix-lines" aria-hidden="true"></div>
         <div class="paper-header">
           <strong>Compose</strong>
-          <div class="controls">
-            <button type="button" onclick="window.location.href='inbox.php'" title="Go to inbox">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M22 6L12 13L2 6" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              INBOX
-            </button>
-          </div>
         </div>
 
-        <div class="section">
+        <div class="section compose-section">
           <form onsubmit="sendEmail(event)" enctype="multipart/form-data">
             <div class="field">
+              <label for="to_email">To</label>
+              <input id="to_email" name="to_email" type="email" value="iskoprint6@gmail.com" readonly class="readonly-field" />
+            </div>
+            <div class="field">
               <label for="subject">Subject</label>
-              <input id="subject" name="subject" type="text" placeholder="Enter subject" />
+              <input id="subject" name="subject" type="text" placeholder="Add a subject" />
             </div>
             <div class="field">
-              <label for="message">Message</label>
-              <textarea id="message" name="message" placeholder="Type your message..."></textarea>
+              <textarea id="message" name="message" placeholder="Compose email..." rows="10"></textarea>
             </div>
             <div class="field">
-              <label for="file_upload">Attach File/Photo</label>
               <div class="file-upload-wrapper">
                 <input id="file_upload" name="file_upload" type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple />
                 <label for="file_upload" class="file-upload-area">
@@ -833,8 +1301,11 @@
                   <div class="file-upload-text">Click to upload files or drag and drop</div>
                   <div class="file-upload-subtext">Images, PDF, DOC, DOCX, TXT files</div>
                   <div class="file-info" id="file-info" style="display: none;">
-                    <i class="fas fa-paperclip"></i>
-                    <span id="file-count">0 files selected</span>
+                    <div class="file-info-header">
+                      <i class="fas fa-paperclip"></i>
+                      <span id="file-count">0 files selected</span>
+                    </div>
+                    <div class="file-names-list" id="file-names-list"></div>
                   </div>
                 </label>
               </div>
@@ -842,7 +1313,7 @@
             <div class="compose-actions">
               <span id="ticker" class="ticker" aria-live="polite">Ready.</span>
               <div class="controls">
-                <button type="reset">
+                <button type="button" onclick="clearFiles()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 12a8 8 0 1 0 2.343-5.657" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round"/>
                     <path d="M4 7v5h5" stroke="#3d4a66" stroke-width="1.6" stroke-linecap="round"/>
@@ -864,7 +1335,10 @@
         <div class="editor" aria-label="Live Preview Editor">
           <div class="editor-grid">
             <div class="toolbox">
-              <h4>Print Settings</h4>
+              <h4>Photocopy Settings</h4>
+              <div class="tool"><label for="ctl-copies">Number of Copies</label>
+                <input id="ctl-copies" type="number" min="1" value="1" />
+              </div>
               <div class="tool"><label for="ctl-paper">Paper Size</label>
                 <select id="ctl-paper">
                   <option selected>A4</option>
@@ -873,45 +1347,11 @@
                   <option>A3</option>
                 </select>
               </div>
-              <div class="tool"><label for="ctl-orientation">Orientation</label>
-                <select id="ctl-orientation">
-                  <option value="portrait" selected>Portrait</option>
-                  <option value="landscape">Landscape</option>
-                </select>
-              </div>
-              <div class="tool"><label>Margins (mm)</label>
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                  <input id="ctl-top" type="number" min="0" value="10" />
-                  <input id="ctl-right" type="number" min="0" value="10" />
-                  <input id="ctl-bottom" type="number" min="0" value="10" />
-                  <input id="ctl-left" type="number" min="0" value="10" />
-                </div>
-              </div>
-              <div class="tool"><label for="ctl-scale">Scale (%)</label>
-                <input id="ctl-scale" type="number" min="10" max="200" value="100" />
-              </div>
-              <div class="tool"><label for="ctl-fit">Fit</label>
-                <select id="ctl-fit">
-                  <option>Actual size</option>
-                  <option selected>Shrink oversized pages</option>
-                  <option>Fit to printable area</option>
-                </select>
-              </div>
-              <div class="tool"><label for="ctl-color">Color</label>
+              <div class="tool"><label for="ctl-color">Color Mode</label>
                 <select id="ctl-color">
-                  <option value="bw" selected>Black & White</option>
+                  <option value="color" selected>Color</option>
+                  <option value="bw">Black & White</option>
                   <option value="grayscale">Grayscale</option>
-                  <option value="color">Color</option>
-                </select>
-              </div>
-              <div class="tool"><label for="ctl-copies">Copies</label>
-                <input id="ctl-copies" type="number" min="1" value="1" />
-              </div>
-              <div class="tool"><label for="ctl-duplex">Duplex</label>
-                <select id="ctl-duplex">
-                  <option value="single" selected>Single-sided</option>
-                  <option value="long">Double-sided (flip on long edge)</option>
-                  <option value="short">Double-sided (flip on short edge)</option>
                 </select>
               </div>
               <div style="display:flex; gap:8px; margin-top:8px;">

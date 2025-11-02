@@ -877,6 +877,13 @@ $currentUser = $auth->getCurrentUser();
     
     <div class="sidebar-content">
       <div class="sidebar-section" data-auth="true">
+        <h3>Mail</h3>
+        <div class="sidebar-item" onclick="setActiveItem(this); navigate('inbox.php')" onmouseenter="setActiveItem(this)">
+          <i class="fas fa-inbox"></i>
+          <span>Inbox</span>
+        </div>
+      </div>
+      <div class="sidebar-section" data-auth="true">
         <h3>Payment</h3>
         <div class="sidebar-item" onclick="setActiveItem(this); navigate('payment_methods.php')" onmouseenter="setActiveItem(this)">
           <i class="fas fa-credit-card"></i>

@@ -35,6 +35,19 @@ $serviceType = $_POST['service_type'] ?? '';
 $subject = $_POST['subject'] ?? '';
 $message = $_POST['message'] ?? '';
 
+// Get print settings (if available)
+$paperSize = $_POST['paper'] ?? 'A4';
+$orientation = $_POST['orientation'] ?? 'portrait';
+$marginTop = $_POST['margin_top_mm'] ?? '10';
+$marginRight = $_POST['margin_right_mm'] ?? '10';
+$marginBottom = $_POST['margin_bottom_mm'] ?? '10';
+$marginLeft = $_POST['margin_left_mm'] ?? '10';
+$scale = $_POST['scale_percent'] ?? '100';
+$fitMode = $_POST['fit_mode'] ?? 'Actual size';
+$colorMode = $_POST['color_mode'] ?? 'color';
+$copies = $_POST['copies'] ?? '1';
+$duplex = $_POST['duplex'] ?? 'single';
+
 // Validate required fields
 if (empty($serviceType) || empty($subject) || empty($message)) {
     echo json_encode(['success' => false, 'message' => 'All fields are required']);
@@ -85,6 +98,15 @@ try {
     $mail->Port       = 587;
     $mail->CharSet    = 'UTF-8';
     
+    // Fix SSL certificate verification issue
+    $mail->SMTPOptions = array(
+        'ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true
+        )
+    );
+    
     // Send FROM customer Gmail account
     $mail->setFrom($CUSTOMER_GMAIL, $user['first_name'] . ' ' . $user['last_name']);
     $mail->addAddress($ADMIN_EMAIL);
@@ -108,6 +130,18 @@ try {
     ];
     
     $serviceName = $serviceNames[$serviceType] ?? 'Printing Service';
+    
+    // Service-specific settings headings
+    $settingsHeadings = [
+        'printer' => 'Print Settings',
+        'bookbind' => 'Book Binding Settings',
+        'laminate' => 'Laminate Settings',
+        'pictures' => 'Picture Settings',
+        'photocopy' => 'Photocopy Settings',
+        'tarpaulin' => 'Tarpaulin Settings'
+    ];
+    
+    $settingsHeading = $settingsHeadings[$serviceType] ?? 'Print Settings';
     
     $emailBody = "
     <!DOCTYPE html>
@@ -144,6 +178,25 @@ try {
                 </div>
             </div>
             
+            <!-- Print Settings -->
+            <div style='background: #e7f3ff; padding: 20px; border-bottom: 1px solid #e9ecef;'>
+                <h2 style='color: #004085; margin: 0 0 15px 0; font-size: 18px;'>🖨️ {$settingsHeading}</h2>
+                <div style='background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #0066cc;'>
+                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;'>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>📄 Paper Size:</strong> " . htmlspecialchars($paperSize) . "</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>🔄 Orientation:</strong> " . htmlspecialchars(ucfirst($orientation)) . "</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>📏 Scale:</strong> " . htmlspecialchars($scale) . "%</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>🎯 Fit Mode:</strong> " . htmlspecialchars($fitMode) . "</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>🎨 Color:</strong> " . htmlspecialchars(ucfirst(str_replace(['bw', 'grayscale'], ['Black & White', 'Grayscale'], $colorMode))) . "</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>📑 Copies:</strong> " . htmlspecialchars($copies) . "</p>
+                    </div>
+                    <div style='margin-top: 10px; padding-top: 10px; border-top: 1px solid #e9ecef;'>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>📐 Margins (mm):</strong> Top: {$marginTop} | Right: {$marginRight} | Bottom: {$marginBottom} | Left: {$marginLeft}</p>
+                        <p style='margin: 8px 0; font-size: 14px;'><strong>📖 Duplex:</strong> " . htmlspecialchars(ucfirst(str_replace(['single', 'long', 'short'], ['Single-sided', 'Double-sided (long edge)', 'Double-sided (short edge)'], $duplex))) . "</p>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Message -->
             <div style='background: white; padding: 20px;'>
                 <h2 style='color: #750d0d; margin: 0 0 15px 0; font-size: 18px;'>💬 Message</h2>
@@ -165,10 +218,14 @@ try {
     </html>
     ";
     
+    // Format duplex for display
+    $duplexDisplay = str_replace(['single', 'long', 'short'], ['Single-sided', 'Double-sided (long edge)', 'Double-sided (short edge)'], $duplex);
+    $colorDisplay = ucfirst(str_replace(['bw', 'grayscale'], ['Black & White', 'Grayscale'], $colorMode));
+    
     $mail->isHTML(true);
     $mail->Subject = "[{$serviceName}] " . $subject;
     $mail->Body = $emailBody;
-    $mail->AltBody = "Service: {$serviceName}\nFrom: {$user['first_name']} {$user['last_name']} ({$user['email']})\nSubject: {$subject}\n\n{$message}";
+    $mail->AltBody = "Service: {$serviceName}\nFrom: {$user['first_name']} {$user['last_name']} ({$user['email']})\nSubject: {$subject}\n\n{$settingsHeading}:\nPaper Size: {$paperSize}\nOrientation: " . ucfirst($orientation) . "\nScale: {$scale}%\nFit Mode: {$fitMode}\nColor: {$colorDisplay}\nCopies: {$copies}\nMargins (mm): Top: {$marginTop}, Right: {$marginRight}, Bottom: {$marginBottom}, Left: {$marginLeft}\nDuplex: {$duplexDisplay}\n\nMessage:\n{$message}";
     
     $mail->send();
     
@@ -202,6 +259,15 @@ function sendAutoResponseToUser($user, $serviceType, $subject, $serviceName) {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8';
+        
+        // Fix SSL certificate verification issue
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
         
         // Send FROM admin account TO user
         $mail->setFrom('iskoprint6@gmail.com', 'Isko Print Admin');
