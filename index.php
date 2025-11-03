@@ -10,6 +10,10 @@ $currentUser = $auth->getCurrentUser();
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
   <title>iskOPrint</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 <style>
@@ -19,6 +23,8 @@ $currentUser = $auth->getCurrentUser();
       --ink: #1a1a1a;
       --muted: #8a8a8a;
       --line: rgba(0,0,0,0.08);
+      --bg: #fff;
+      --bg-noche: linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(40,40,40,0.95) 100%);
     }
 
     * { box-sizing: border-box; }
@@ -70,9 +76,11 @@ $currentUser = $auth->getCurrentUser();
       padding: 12px 22px; background: transparent; color: #222; text-decoration: none; font-size: 14px; border-radius: 8px;
       border: 1px solid transparent; transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
     }
-    .tab:hover { background: rgba(117,13,13,0.08); color: var(--maroon); border-color: rgba(117,13,13,0.25); transform: translateY(-1px); }
-    /* Active tab matches hover pill style */
-    .tab.active { background: rgba(117,13,13,0.08); color: var(--maroon); border-color: rgba(117,13,13,0.25); transform: translateY(-1px); }
+    @media (hover:hover) and (pointer:fine) {
+      .tab:hover { background: rgba(117,13,13,0.08); color: var(--maroon); border-color: rgba(117,13,13,0.25); transform: translateY(-1px); }
+    }
+    /* Neutralize any pre-existing active class */
+    .tab.active { background: transparent; color: inherit; border-color: transparent; transform: none; }
 
     .user-icon { 
       width: 40px; 
@@ -1160,5 +1168,7 @@ $currentUser = $auth->getCurrentUser();
           io.observe(el);
         }
       });
+
+      // Option B: do not force any tab active state programmatically
     });
   </script>

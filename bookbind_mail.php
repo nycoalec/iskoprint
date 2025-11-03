@@ -6,7 +6,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
   <title>BookBinder Mail UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -21,7 +26,11 @@
       --shadow: rgba(0, 0, 0, 0.08);
       --line: rgba(117,13,13,0.22);
       --dot: rgba(117,13,13,0.30);
+      --bg: linear-gradient(180deg, rgba(255,249,249,0.8) 0%, rgba(251,238,238,0.8) 100%), url('assets/pup_bg.jpg');
+      
     }
+    
+    
     
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -56,6 +65,7 @@
       gap: 12px;
       padding-bottom: 16px;
       border-bottom: 1px dashed var(--line);
+      position: relative;
     }
 
     .printer-icon {
@@ -614,6 +624,63 @@
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
     .thumb.active { outline:2px solid var(--maroon); }
+    
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    
+    
+    
+    .zoom-btn {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--maroon);
+      font-size: 14px;
+    }
+    
+    
+    
+    .zoom-btn:hover {
+      background: #f9fafb;
+      border-color: var(--maroon);
+      transform: scale(1.05);
+    }
+    
+    
+    
+    .zoom-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .zoom-level {
+      min-width: 50px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--maroon);
+    }
+    
+    
   </style>
   <script>
     // Optional: purely UI feedback without backend
@@ -668,10 +735,14 @@
           const quantityEl = document.getElementById('ctl-quantity');
           const bindingTypeEl = document.getElementById('ctl-binding-type');
           const coverTypeEl = document.getElementById('ctl-cover-type');
+          const coverColorEl = document.getElementById('ctl-cover-color');
+          const pageRangeEl = document.getElementById('ctl-page-range');
           const paperEl = document.getElementById('ctl-paper');
           if (quantityEl) formData.append('quantity', Math.max(1, parseInt(quantityEl.value||'1',10)));
           if (bindingTypeEl) formData.append('binding_type', bindingTypeEl.value);
           if (coverTypeEl) formData.append('cover_type', coverTypeEl.value);
+          if (coverColorEl) formData.append('cover_color', coverColorEl.value);
+          if (pageRangeEl) formData.append('page_range', (pageRangeEl.value||'').trim());
           if (paperEl) formData.append('paper', paperEl.value);
           // Default values for print settings
           formData.append('copies', '1');
@@ -809,6 +880,14 @@
           paperInner.innerHTML = '';
         }
       }
+      
+      // Reset zoom to 100%
+      if (typeof window.currentZoom !== 'undefined') {
+        window.currentZoom = 100;
+        if (typeof updateZoom === 'function') {
+          updateZoom();
+        }
+      }
     }
 
     function handleDragOver(e) {
@@ -840,6 +919,7 @@
 
     // Add event listener for file input change
     document.addEventListener('DOMContentLoaded', function() {
+      
       const fileInput = document.getElementById('file_upload');
       const fileUploadArea = document.querySelector('.file-upload-area');
       const form = document.querySelector('form');
@@ -862,6 +942,58 @@
         });
       }
 
+      // Zoom functionality
+      window.currentZoom = 100;
+      const zoomIncrement = 25;
+      const minZoom = 25;
+      const maxZoom = 500;
+      
+      function updateZoom() {
+        const paperInner = document.getElementById('paper-inner');
+        const paperCanvas = document.getElementById('paper-canvas');
+        
+        if (paperInner && paperCanvas) {
+          const zoomScale = window.currentZoom / 100;
+          
+          paperInner.style.transform = `scale(${zoomScale})`;
+          paperInner.style.transformOrigin = 'top left';
+          
+          if (zoomScale <= 1) {
+            paperCanvas.style.overflow = 'hidden';
+          } else {
+            paperCanvas.style.overflow = 'auto';
+          }
+        }
+        
+        const zoomLevelDisplay = document.getElementById('zoom-level');
+        if (zoomLevelDisplay) {
+          zoomLevelDisplay.textContent = window.currentZoom + '%';
+        }
+      }
+      
+      function zoomIn() {
+        if (window.currentZoom < maxZoom) {
+          window.currentZoom = Math.min(window.currentZoom + zoomIncrement, maxZoom);
+          updateZoom();
+        }
+      }
+      
+      function zoomOut() {
+        if (window.currentZoom > minZoom) {
+          window.currentZoom = Math.max(window.currentZoom - zoomIncrement, minZoom);
+          updateZoom();
+        }
+      }
+      
+      function resetZoom() {
+        window.currentZoom = 100;
+        updateZoom();
+      }
+      
+      window.zoomIn = zoomIn;
+      window.zoomOut = zoomOut;
+      window.resetZoom = resetZoom;
+
       // Live Preview wiring
       const controls = {
         paper: document.getElementById('ctl-paper'),
@@ -875,6 +1007,8 @@
         color: { value: 'bw' }, // Default
         copies: { value: '1' }, // Default
         duplex: { value: 'long' }, // Default
+        coverColor: { value: 'black' }, // Default
+        pageRange: { value: 'all' }, // Default
       };
       const canvas = document.getElementById('paper-canvas');
       const paperInner = document.getElementById('paper-inner');
@@ -1005,6 +1139,10 @@
           content.style.maxWidth = (canvasW - (padding * 2)) + 'px';
           content.style.width = '100%';
         }
+        
+        if (typeof updateZoom === 'function') {
+          setTimeout(updateZoom, 50);
+        }
       }
 
       function loadPreviewFromFiles(){
@@ -1017,6 +1155,10 @@
         paperInner.innerHTML = '';
         thumbs.style.display = 'none';
         thumbs.innerHTML = '';
+        
+        // Reset zoom when loading new file
+        window.currentZoom = 100;
+        updateZoom();
         
         // Scroll preview to top when loading new file
         const previewWrap = document.querySelector('.preview-wrap');
@@ -1323,10 +1465,25 @@
         win.document.close();
       }
 
-      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); });
+      // --- Job summary ---
+      function updateJobSummary(){
+        const badge = document.getElementById('job-summary');
+        if (!badge) return;
+        const qtyEl = document.getElementById('ctl-quantity');
+        const qty = Math.max(1, parseInt((qtyEl && qtyEl.value) || '1', 10));
+        const filesSel = (fileInput && fileInput.files) ? fileInput.files.length : 0;
+        const itemsText = filesSel > 0 ? filesSel : '-';
+        const totalSets = filesSel > 0 ? (filesSel * qty) : '-';
+        badge.textContent = `Items: ${itemsText}, Sets: ${qty}, Total Books: ${totalSets}`;
+      }
+
+      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); updateJobSummary(); });
       // Only add listeners to actual control elements
       if (controls.paper) controls.paper.addEventListener('change', applyPreviewDims);
+      const qtyCtl = document.getElementById('ctl-quantity');
+      if (qtyCtl) qtyCtl.addEventListener('input', updateJobSummary);
       applyPreviewDims();
+      updateJobSummary();
     });
 
   </script>
@@ -1338,8 +1495,7 @@
         <a class="logo" href="./" title="Go to index">
           <img src="assets/logo.png" alt="Printer Logo" />
           <span class="printer-title">Book Bind Mail Console</span>
-        </a>
-      </div>
+        </div>
 
       <div class="paper" role="document">
         <div class="dotmatrix-lines" aria-hidden="true"></div>
@@ -1423,6 +1579,14 @@
                   <option value="none">No Cover</option>
                 </select>
               </div>
+              <div class="tool"><label for="ctl-cover-color">Cover Color</label>
+                <select id="ctl-cover-color">
+                  <option value="maroon" selected>Maroon</option>
+                  <option value="black">Black</option>
+                  <option value="white">White</option>
+                  <option value="blue">Blue</option>
+                </select>
+              </div>
               <div class="tool"><label for="ctl-paper">Paper Size</label>
                 <select id="ctl-paper">
                   <option selected>A4</option>
@@ -1437,6 +1601,18 @@
             </div>
             <div class="preview-wrap">
               <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out" aria-label="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-btn" onclick="zoomIn()" title="Zoom In" aria-label="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom" aria-label="Reset Zoom">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
                 <div id="paper-inner" class="paper-inner"></div>
               </div>
             </div>

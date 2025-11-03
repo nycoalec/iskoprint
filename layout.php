@@ -11,10 +11,10 @@ if (!$auth->isLoggedIn()) { header('Location: index.php'); exit; }
   <title>Layout - iskOPrint</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <style>
-    :root { --maroon:#750d0d; --maroon-dark:#5d0a0a; --ink:#1a1a1a; --line:rgba(0,0,0,0.08);} 
+    :root { --maroon:#750d0d; --maroon-dark:#5d0a0a; --ink:#1a1a1a; --line:rgba(0,0,0,0.08);}
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; color: var(--ink); background:#fff; }
     .topbar { background:#fff; border-bottom:1px solid var(--line); }
-    .nav { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; position: relative; }
     .brand { color:#b10f0f; font-weight:800; letter-spacing:.2px; }
     .container { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px; }
     .title { display:flex; align-items:center; gap:10px; color: var(--maroon); }
@@ -23,6 +23,7 @@ if (!$auth->isLoggedIn()) { header('Location: index.php'); exit; }
     select { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; }
     .btn { appearance:none; border:1px solid var(--maroon); color:#fff; background:var(--maroon); border-radius:8px; padding:10px 14px; cursor:pointer; font-weight:600; }
     .back { display:inline-flex; align-items:center; gap:8px; text-decoration:none; color: var(--maroon); font-weight:600; }
+    
   </style>
 </head>
 <body>
@@ -53,6 +54,8 @@ if (!$auth->isLoggedIn()) { header('Location: index.php'); exit; }
       </div>
     </div>
   </main>
+  <script>
+  </script>
 </body>
 </html>
 

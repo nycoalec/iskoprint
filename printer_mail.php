@@ -6,6 +6,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
   <title>Printer Mail UI</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -22,6 +26,8 @@
       --shadow: rgba(0, 0, 0, 0.08);
       --line: rgba(117,13,13,0.22);
       --dot: rgba(117,13,13,0.30);
+      --bg: linear-gradient(180deg, rgba(255,249,249,0.8) 0%, rgba(251,238,238,0.8) 100%), url('assets/pup_bg.jpg');
+      --bg-noche: linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(40,40,40,0.95) 100%);
     }
     
     * { box-sizing: border-box; }
@@ -57,6 +63,7 @@
       gap: 12px;
       padding-bottom: 16px;
       border-bottom: 1px dashed var(--line);
+      position: relative;
     }
 
     .printer-icon {
@@ -693,6 +700,7 @@
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
     .thumb.active { outline:2px solid var(--maroon); }
+    
   </style>
   </style>
   <script>
@@ -749,6 +757,11 @@
         const duplexEl = document.getElementById('ctl-duplex');
         const paperEl = document.getElementById('ctl-paper');
         const orientEl = document.getElementById('ctl-orientation');
+        const pageRangeEl = document.getElementById('ctl-page-range');
+        const nupEl = document.getElementById('ctl-nup');
+        const collateEl = document.getElementById('ctl-collate');
+        const stapleEl = document.getElementById('ctl-staple');
+        const holeEl = document.getElementById('ctl-hole');
         const topEl = document.getElementById('ctl-top');
         const rightEl = document.getElementById('ctl-right');
         const bottomEl = document.getElementById('ctl-bottom');
@@ -760,6 +773,13 @@
         if (duplexEl) formData.append('duplex', duplexEl.value);
         if (paperEl) formData.append('paper', paperEl.value);
         if (orientEl) formData.append('orientation', orientEl.value);
+        if (pageRangeEl) formData.append('page_range', (pageRangeEl.value||'').trim());
+        if (nupEl) formData.append('nup', nupEl.value);
+        if (collateEl) formData.append('collate', collateEl.checked ? 'true' : 'false');
+        const finishing = [];
+        if (stapleEl && stapleEl.checked) finishing.push('staple');
+        if (holeEl && holeEl.checked) finishing.push('hole_punch');
+        if (finishing.length) formData.append('finishing', finishing.join(','));
         if (topEl) formData.append('margin_top_mm', topEl.value);
         if (rightEl) formData.append('margin_right_mm', rightEl.value);
         if (bottomEl) formData.append('margin_bottom_mm', bottomEl.value);
@@ -1504,9 +1524,59 @@
 
       // Initialize preview with empty placeholder
       applyPreviewDims();
+      attachSummaryWatchers();
+
+    });
     });
 
-  </script>
+    // --- Summary helpers ---
+    function attachSummaryWatchers(){
+      const ids = ['ctl-page-range','ctl-nup','ctl-copies','ctl-duplex','ctl-color'];
+      ids.forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateJobSummary); });
+      updateJobSummary();
+    }
+
+    function parsePageRange(input, max){
+      const s = (input||'').replace(/\s+/g,'');
+      if (!s) return max||0;
+      let set = new Set();
+      s.split(',').forEach(part => {
+        if (!part) return;
+        const m = part.match(/^(\d+)(?:-(\d+))?$/);
+        if (!m) return;
+        let a = parseInt(m[1],10), b = m[2]?parseInt(m[2],10):a;
+        if (a>b) [a,b] = [b,a];
+        for (let i=a;i<=b;i++){ if (!max || i<=max) set.add(i); }
+      });
+      return set.size || (max||0);
+    }
+
+    function getSelectedPages(){
+      if (window.pdfDoc && typeof pdfDoc.numPages === 'number'){
+        const max = pdfDoc.numPages;
+        const range = document.getElementById('ctl-page-range');
+        const count = parsePageRange(range?range.value:'', max);
+        return Math.min(count || max, max);
+      }
+      // Fallback: unknown pages, assume 1
+      return 1;
+    }
+
+    function updateJobSummary(){
+      const pages = getSelectedPages();
+      const nupEl = document.getElementById('ctl-nup');
+      const duplexEl = document.getElementById('ctl-duplex');
+      const copiesEl = document.getElementById('ctl-copies');
+      const nup = nupEl?parseInt(nupEl.value||'1',10):1;
+      const duplex = duplexEl?duplexEl.value:'single';
+      const copies = copiesEl?Math.max(1, parseInt(copiesEl.value||'1',10)):1;
+      const perSheet = nup * (duplex==='single'?1:2);
+      const sheetsPerCopy = Math.max(1, Math.ceil(pages / Math.max(1, perSheet)));
+      const totalSheets = sheetsPerCopy * copies;
+      const el = document.getElementById('job-summary');
+      if (el) el.textContent = `Pages: ${pages}, Sheets per copy: ${sheetsPerCopy}, Copies: ${copies}, Total sheets: ${totalSheets}`;
+    }
+    </script>
 </head>
 <body>
   <div class="app">
@@ -1516,6 +1586,7 @@
           <img src="assets/logo.png" alt="Printer Logo" />
           <span class="printer-title">Printer Mail Console</span>
         </a>
+        
       </div>
 
       <div class="paper" role="document">
@@ -1599,6 +1670,16 @@
                   <option value="landscape">Landscape</option>
                 </select>
               </div>
+              <div class="tool"><label for="ctl-page-range">Page Range</label>
+                <input id="ctl-page-range" type="text" placeholder="e.g. 1-3,5" />
+              </div>
+              <div class="tool"><label for="ctl-nup">Pages per sheet</label>
+                <select id="ctl-nup">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="4">4</option>
+                </select>
+              </div>
               <div class="tool"><label>Margins (mm)</label>
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
                   <input id="ctl-top" type="number" min="0" value="10" />
@@ -1634,6 +1715,13 @@
                   <option value="short">Double-sided (flip on short edge)</option>
                 </select>
               </div>
+              <div class="tool"><label>Finishing</label>
+                <div style="display:flex; gap:12px; align-items:center;">
+                  <label style="display:inline-flex; gap:6px; align-items:center;"><input id="ctl-collate" type="checkbox" /> <span>Collate</span></label>
+                  <label style="display:inline-flex; gap:6px; align-items:center;"><input id="ctl-staple" type="checkbox" /> <span>Staple</span></label>
+                  <label style="display:inline-flex; gap:6px; align-items:center;"><input id="ctl-hole" type="checkbox" /> <span>Hole Punch</span></label>
+                </div>
+              </div>
               <div style="display:flex; gap:8px; margin-top:8px;">
                 <button type="button" class="button" onclick="openPrintPreview()"><i class="fas fa-print"></i> Print Preview</button>
               </div>
@@ -1656,6 +1744,7 @@
               </div>
             </div>
           </div>
+          <div id="job-summary" class="badge" style="margin-top:10px;">Pages: -, Sheets: -, Copies: -</div>
           <div id="thumbs" class="thumbs" aria-label="PDF Thumbnails" style="display:none"></div>
         </div>
 
@@ -1667,3 +1756,4 @@
 </body>
 </html>
 
+      

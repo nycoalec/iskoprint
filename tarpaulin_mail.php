@@ -7,6 +7,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tarpaulin Mail UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -614,6 +619,43 @@
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
     .thumb.active { outline:2px solid var(--maroon); }
+
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    .zoom-btn {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--maroon);
+      font-size: 14px;
+    }
+    .zoom-btn:hover {
+      background: #f9fafb;
+      border-color: var(--maroon);
+      transform: scale(1.05);
+    }
+    .zoom-btn:active { transform: scale(0.95); }
+    .zoom-level { min-width: 50px; text-align: center; font-size: 12px; font-weight: 600; }
   </style>
   <script>
     // File upload handling
@@ -751,10 +793,16 @@
         const sizeEl = document.getElementById('ctl-size');
         const materialEl = document.getElementById('ctl-material');
         const finishingEl = document.getElementById('ctl-finishing');
+        const bleedEl = document.getElementById('ctl-bleed');
+        const safeEl = document.getElementById('ctl-safe');
+        const grommetEl = document.getElementById('ctl-grommet');
         if (quantityEl) formData.append('quantity', Math.max(1, parseInt(quantityEl.value||'1',10)));
         if (sizeEl) formData.append('size', sizeEl.value);
         if (materialEl) formData.append('material', materialEl.value);
         if (finishingEl) formData.append('finishing', finishingEl.value);
+        if (bleedEl) formData.append('bleed_mm', bleedEl.value);
+        if (safeEl) formData.append('safe_margin_mm', safeEl.value);
+        if (grommetEl) formData.append('grommet_spacing_cm', grommetEl.value);
         // Default values for print settings
         formData.append('copies', '1');
         formData.append('duplex', 'single');
@@ -837,7 +885,7 @@
       const form = document.querySelector('form');
       
       if (fileInput) {
-        fileInput.addEventListener('change', updateFileCount);
+        fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); updateJobSummary(); });
       }
       
       if (fileUploadArea) {
@@ -871,6 +919,38 @@
       const canvas = document.getElementById('paper-canvas');
       const paperInner = document.getElementById('paper-inner');
       const thumbs = document.getElementById('thumbs');
+      // Zoom controls
+      window.currentZoom = 100;
+      const zoomIncrement = 25;
+      const minZoom = 25;
+      const maxZoom = 500;
+
+      function updateZoom() {
+        if (!paperInner || !canvas) return;
+        const zoomScale = window.currentZoom / 100;
+        paperInner.style.transform = `scale(${zoomScale})`;
+        paperInner.style.transformOrigin = 'top left';
+        canvas.style.overflow = zoomScale <= 1 ? 'hidden' : 'auto';
+        const zoomLevelDisplay = document.getElementById('zoom-level');
+        if (zoomLevelDisplay) zoomLevelDisplay.textContent = window.currentZoom + '%';
+      }
+
+      function zoomIn() {
+        if (window.currentZoom < maxZoom) {
+          window.currentZoom = Math.min(window.currentZoom + zoomIncrement, maxZoom);
+          updateZoom();
+        }
+      }
+
+      function zoomOut() {
+        if (window.currentZoom > minZoom) {
+          window.currentZoom = Math.max(window.currentZoom - zoomIncrement, minZoom);
+          updateZoom();
+        }
+      }
+
+      function resetZoom() { window.currentZoom = 100; updateZoom(); }
+      window.zoomIn = zoomIn; window.zoomOut = zoomOut; window.resetZoom = resetZoom;
       let currentFileUrl = null;
       let currentFileType = null;
       let pdfDoc = null;
@@ -987,6 +1067,8 @@
         
         const previewWrap = document.querySelector('.preview-wrap');
         if (previewWrap) previewWrap.scrollTop = 0;
+        // Reset zoom when loading new file
+        window.currentZoom = 100; updateZoom();
         
         if (file.type.startsWith('image/')) {
           const img = new Image();
@@ -1258,8 +1340,26 @@
         win.document.close();
       }
 
-      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); });
+      // --- Job summary ---
+      function updateJobSummary(){
+        const badge = document.getElementById('job-summary');
+        if (!badge) return;
+        const qtyEl = document.getElementById('ctl-quantity');
+        const sizeEl = document.getElementById('ctl-size');
+        const qty = Math.max(1, parseInt((qtyEl && qtyEl.value) || '1', 10));
+        const filesSel = (fileInput && fileInput.files) ? fileInput.files.length : 0;
+        const itemsText = filesSel > 0 ? filesSel : '-';
+        const sizeText = sizeEl ? sizeEl.value : '-';
+        const totalPrints = filesSel > 0 ? (filesSel * qty) : '-';
+        badge.textContent = `Items: ${itemsText}, Size: ${sizeText}, Qty: ${qty}, Total Prints: ${totalPrints}`;
+      }
+
+      const qtyCtl = document.getElementById('ctl-quantity');
+      const sizeCtl = document.getElementById('ctl-size');
+      if (qtyCtl) qtyCtl.addEventListener('input', updateJobSummary);
+      if (sizeCtl) sizeCtl.addEventListener('change', updateJobSummary);
       applyPreviewDims();
+      updateJobSummary();
     });
 
   </script>
@@ -1367,12 +1467,27 @@
                   <option value="none">No Finishing</option>
                 </select>
               </div>
-              <div style="display:flex; gap:8px; margin-top:8px;">
-                <button type="button" class="button" onclick="openPrintPreview()"><i class="fas fa-print"></i> Print Preview</button>
+              <div class="tool"><label for="ctl-bleed">Bleed (mm)</label>
+                <input id="ctl-bleed" type="number" min="0" value="5" />
+              </div>
+              <div class="tool"><label for="ctl-safe">Safe Margin (mm)</label>
+                <input id="ctl-safe" type="number" min="0" value="10" />
               </div>
             </div>
             <div class="preview-wrap">
               <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out" aria-label="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-btn" onclick="zoomIn()" title="Zoom In" aria-label="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom" aria-label="Reset Zoom">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
                 <div id="paper-inner" class="paper-inner"></div>
               </div>
             </div>

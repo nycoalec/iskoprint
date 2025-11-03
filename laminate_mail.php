@@ -6,7 +6,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
   <title>Laminate Mail UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -22,6 +27,8 @@
       --line: rgba(117,13,13,0.22);
       --dot: rgba(117,13,13,0.30);
     }
+    
+    
     
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -56,6 +63,7 @@
       gap: 12px;
       padding-bottom: 16px;
       border-bottom: 1px dashed var(--line);
+      position: relative;
     }
 
     .printer-icon {
@@ -557,6 +565,63 @@
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
     .thumb.active { outline:2px solid var(--maroon); }
+    
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    
+    
+    
+    .zoom-btn {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--maroon);
+      font-size: 14px;
+    }
+    
+    
+    
+    .zoom-btn:hover {
+      background: #f9fafb;
+      border-color: var(--maroon);
+      transform: scale(1.05);
+    }
+    
+    
+    
+    .zoom-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .zoom-level {
+      min-width: 50px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--maroon);
+    }
+    
+    
   </style>
   <script>
     // Email sending function
@@ -605,10 +670,12 @@
         const quantityEl = document.getElementById('ctl-quantity');
         const laminationTypeEl = document.getElementById('ctl-lamination-type');
         const thicknessEl = document.getElementById('ctl-thickness');
+        const filmTypeEl = document.getElementById('ctl-film-type');
         const paperEl = document.getElementById('ctl-paper');
         if (quantityEl) formData.append('quantity', Math.max(1, parseInt(quantityEl.value||'1',10)));
         if (laminationTypeEl) formData.append('lamination_type', laminationTypeEl.value);
         if (thicknessEl) formData.append('thickness', thicknessEl.value);
+        if (filmTypeEl) formData.append('film_type', filmTypeEl.value);
         if (paperEl) formData.append('paper', paperEl.value);
         // Default values for print settings
         formData.append('copies', '1');
@@ -770,6 +837,78 @@
           paperInner.innerHTML = '';
         }
       }
+      
+      // Reset zoom to 100%
+      if (typeof window.currentZoom !== 'undefined') {
+        window.currentZoom = 100;
+        if (typeof updateZoom === 'function') {
+          updateZoom();
+        }
+      }
+    }
+
+    // Zoom functionality
+    window.currentZoom = 100;
+    const zoomIncrement = 25;
+    const minZoom = 25;
+    const maxZoom = 500;
+    
+    function updateZoom() {
+      const paperInner = document.getElementById('paper-inner');
+      const paperCanvas = document.getElementById('paper-canvas');
+      
+      if (paperInner && paperCanvas) {
+        const zoomScale = window.currentZoom / 100;
+        
+        paperInner.style.transform = `scale(${zoomScale})`;
+        paperInner.style.transformOrigin = 'top left';
+        
+        if (zoomScale <= 1) {
+          paperCanvas.style.overflow = 'hidden';
+        } else {
+          paperCanvas.style.overflow = 'auto';
+        }
+      }
+      
+      const zoomLevelDisplay = document.getElementById('zoom-level');
+      if (zoomLevelDisplay) {
+        zoomLevelDisplay.textContent = window.currentZoom + '%';
+      }
+    }
+    
+    function zoomIn() {
+      if (window.currentZoom < maxZoom) {
+        window.currentZoom = Math.min(window.currentZoom + zoomIncrement, maxZoom);
+        updateZoom();
+      }
+    }
+    
+    function zoomOut() {
+      if (window.currentZoom > minZoom) {
+        window.currentZoom = Math.max(window.currentZoom - zoomIncrement, minZoom);
+        updateZoom();
+      }
+    }
+    
+    function resetZoom() {
+      window.currentZoom = 100;
+      updateZoom();
+    }
+    
+    window.zoomIn = zoomIn;
+    window.zoomOut = zoomOut;
+    window.resetZoom = resetZoom;
+    
+    // --- Job summary ---
+    function updateJobSummary(){
+      const badge = document.getElementById('job-summary');
+      if (!badge) return;
+      const qtyEl = document.getElementById('ctl-quantity');
+      const qty = Math.max(1, parseInt((qtyEl && qtyEl.value) || '1', 10));
+      const filesSel = (document.getElementById('file_upload')?.files?.length) || 0;
+      const itemsText = filesSel > 0 ? filesSel : '-';
+      const total = filesSel > 0 ? (filesSel * qty) : '-';
+      badge.textContent = `Items: ${itemsText}, Qty: ${qty}, Total Laminates: ${total}`;
     }
 
     // Add event listener for file input change
@@ -779,7 +918,7 @@
       const form = document.querySelector('form');
       
       if (fileInput) {
-        fileInput.addEventListener('change', updateFileCount);
+        fileInput.addEventListener('change', () => { updateFileCount(); updateJobSummary(); });
       }
       
       if (fileUploadArea) {
@@ -914,6 +1053,9 @@
           content.style.maxWidth = (canvasW - (padding * 2)) + 'px';
           content.style.width = '100%';
         }
+        
+        // Update zoom after layout changes
+        setTimeout(updateZoom, 50);
       }
 
       function loadPreviewFromFiles(){
@@ -927,6 +1069,10 @@
         thumbs.style.display = 'none';
         thumbs.innerHTML = '';
         
+        // Reset zoom to 100%
+        window.currentZoom = 100;
+        updateZoom();
+        
         // Scroll preview to top when loading new file
         const previewWrap = document.querySelector('.preview-wrap');
         if (previewWrap) {
@@ -937,6 +1083,9 @@
           const img = new Image();
           img.onload = () => {
             applyPreviewDims();
+      const qtyCtl = document.getElementById('ctl-quantity');
+      if (qtyCtl) qtyCtl.addEventListener('input', updateJobSummary);
+      updateJobSummary();
             setTimeout(() => {
               const previewWrap = document.querySelector('.preview-wrap');
               if (previewWrap) previewWrap.scrollTop = 0;
@@ -1207,6 +1356,8 @@
       // Only add listeners to actual control elements
       if (controls.paper) controls.paper.addEventListener('change', applyPreviewDims);
       applyPreviewDims();
+      
+      
     });
 
   </script>
@@ -1219,6 +1370,7 @@
           <img src="assets/logo.png" alt="Printer Logo" />
           <span class="printer-title">Laminate Mail Console</span>
         </a>
+        
       </div>
 
       <div class="paper" role="document">
@@ -1304,6 +1456,18 @@
                   <option value="12mil">12 Mil (0.30mm)</option>
                 </select>
               </div>
+              <div class="tool" aria-hidden="false">
+                <label></label>
+                <div style="font-size:12px; color:#6b7280;">
+                  Note: Gloss is commonly 5–7 Mil, Matte often 10–12 Mil. Heavier films are stiffer and more durable.
+                </div>
+              </div>
+              <div class="tool"><label for="ctl-film-type">Film Type</label>
+                <select id="ctl-film-type">
+                  <option value="pouch" selected>Pouch</option>
+                  <option value="roll">Roll</option>
+                </select>
+              </div>
               <div class="tool"><label for="ctl-paper">Paper Size</label>
                 <select id="ctl-paper">
                   <option selected>A4</option>
@@ -1318,10 +1482,23 @@
             </div>
             <div class="preview-wrap">
               <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out" aria-label="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-btn" onclick="zoomIn()" title="Zoom In" aria-label="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom" aria-label="Reset Zoom">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
                 <div id="paper-inner" class="paper-inner"></div>
               </div>
             </div>
           </div>
+          <div id="job-summary" class="badge" style="margin-top:10px;">Items: -, Qty: 1, Total Laminates: -</div>
           <div id="thumbs" class="thumbs" aria-label="PDF Thumbnails" style="display:none"></div>
         </div>
 

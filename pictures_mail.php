@@ -6,7 +6,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/theme.css" />
   <title>Pictures Mail UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -21,6 +26,8 @@
       --shadow: rgba(0, 0, 0, 0.08);
       --line: rgba(117,13,13,0.22);
       --dot: rgba(117,13,13,0.30);
+      --bg: linear-gradient(180deg, rgba(255,249,249,0.8) 0%, rgba(251,238,238,0.8) 100%), url('assets/pup_bg.jpg');
+      --bg-noche: linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(40,40,40,0.95) 100%);
     }
     
     * { box-sizing: border-box; }
@@ -56,6 +63,7 @@
       gap: 12px;
       padding-bottom: 16px;
       border-bottom: 1px dashed var(--line);
+      position: relative;
     }
 
     .printer-icon {
@@ -614,6 +622,76 @@
     .thumb { border:1px solid #e5e7eb; border-radius:6px; background:#fff; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .thumb:hover { transform: translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
     .thumb.active { outline:2px solid var(--maroon); }
+    
+    
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    
+    body.night-mode .zoom-controls {
+      background: rgba(45, 45, 45, 0.95);
+      border-color: #555;
+    }
+    
+    .zoom-btn {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--maroon);
+      font-size: 14px;
+    }
+    
+    body.night-mode .zoom-btn {
+      background: #2d2d2d;
+      border-color: #555;
+      color: #e0e0e0;
+    }
+    
+    .zoom-btn:hover {
+      background: #f9fafb;
+      border-color: var(--maroon);
+      transform: scale(1.05);
+    }
+    
+    body.night-mode .zoom-btn:hover {
+      background: #3a3a3a;
+      border-color: var(--maroon);
+    }
+    
+    .zoom-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .zoom-level {
+      min-width: 50px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--maroon);
+    }
+    
+    body.night-mode .zoom-level {
+      color: #e0e0e0;
+    }
   </style>
   <script>
     // File upload handling
@@ -674,7 +752,69 @@
           paperInner.innerHTML = '';
         }
       }
+      
+      // Reset zoom to 100%
+      if (typeof window.currentZoom !== 'undefined') {
+        window.currentZoom = 100;
+        if (typeof updateZoom === 'function') {
+          updateZoom();
+        }
+      }
     }
+
+    // Zoom functionality
+    window.currentZoom = 100;
+    const zoomIncrement = 25;
+    const minZoom = 25;
+    const maxZoom = 500;
+    
+    function updateZoom() {
+      const paperInner = document.getElementById('paper-inner');
+      const paperCanvas = document.getElementById('paper-canvas');
+      
+      if (paperInner && paperCanvas) {
+        const zoomScale = window.currentZoom / 100;
+        
+        paperInner.style.transform = `scale(${zoomScale})`;
+        paperInner.style.transformOrigin = 'top left';
+        
+        if (zoomScale <= 1) {
+          paperCanvas.style.overflow = 'hidden';
+        } else {
+          paperCanvas.style.overflow = 'auto';
+        }
+      }
+      
+      const zoomLevelDisplay = document.getElementById('zoom-level');
+      if (zoomLevelDisplay) {
+        zoomLevelDisplay.textContent = window.currentZoom + '%';
+      }
+    }
+    
+    function zoomIn() {
+      if (window.currentZoom < maxZoom) {
+        window.currentZoom = Math.min(window.currentZoom + zoomIncrement, maxZoom);
+        updateZoom();
+      }
+    }
+    
+    function zoomOut() {
+      if (window.currentZoom > minZoom) {
+        window.currentZoom = Math.max(window.currentZoom - zoomIncrement, minZoom);
+        updateZoom();
+      }
+    }
+    
+    function resetZoom() {
+      window.currentZoom = 100;
+      updateZoom();
+    }
+    
+    window.zoomIn = zoomIn;
+    window.zoomOut = zoomOut;
+    window.resetZoom = resetZoom;
+    
+    
 
     // Drag and drop handling
     function handleDragOver(e) {
@@ -751,10 +891,14 @@
         const photoSizeEl = document.getElementById('ctl-photo-size');
         const paperTypeEl = document.getElementById('ctl-paper-type');
         const finishEl = document.getElementById('ctl-finish');
+        const dpiEl = document.getElementById('ctl-dpi');
+        const colorCorrEl = document.getElementById('ctl-color-corr');
         if (quantityEl) formData.append('quantity', Math.max(1, parseInt(quantityEl.value||'1',10)));
         if (photoSizeEl) formData.append('photo_size', photoSizeEl.value);
         if (paperTypeEl) formData.append('paper_type', paperTypeEl.value);
         if (finishEl) formData.append('finish', finishEl.value);
+        if (dpiEl) formData.append('dpi', dpiEl.value);
+        if (colorCorrEl) formData.append('color_correction', colorCorrEl.value);
         // Default values for print settings
         formData.append('copies', '1');
         formData.append('duplex', 'single');
@@ -971,6 +1115,9 @@
           content.style.maxWidth = (canvasW - (padding * 2)) + 'px';
           content.style.width = '100%';
         }
+        
+        // Update zoom after layout changes
+        setTimeout(updateZoom, 50);
       }
 
       function loadPreviewFromFiles(){
@@ -983,6 +1130,10 @@
         paperInner.innerHTML = '';
         thumbs.style.display = 'none';
         thumbs.innerHTML = '';
+        
+        // Reset zoom to 100%
+        window.currentZoom = 100;
+        updateZoom();
         
         const previewWrap = document.querySelector('.preview-wrap');
         if (previewWrap) previewWrap.scrollTop = 0;
@@ -1257,9 +1408,26 @@
         win.document.close();
       }
 
-      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); });
+      // --- Job summary ---
+      function updateJobSummary(){
+        const badge = document.getElementById('job-summary');
+        if (!badge) return;
+        const qtyEl = document.getElementById('ctl-quantity');
+        const qty = Math.max(1, parseInt((qtyEl && qtyEl.value) || '1', 10));
+        const filesSel = (fileInput && fileInput.files) ? fileInput.files.length : 0;
+        const itemsText = filesSel > 0 ? filesSel : '-';
+        const totalPrints = filesSel > 0 ? (filesSel * qty) : '-';
+        badge.textContent = `Items: ${itemsText}, Copies: ${qty}, Total Prints: ${totalPrints}`;
+      }
+
+      if (fileInput) fileInput.addEventListener('change', () => { updateFileCount(); loadPreviewFromFiles(); updateJobSummary(); });
+      const qtyCtl = document.getElementById('ctl-quantity');
+      if (qtyCtl) qtyCtl.addEventListener('input', updateJobSummary);
       // Only add listeners to actual control elements if they exist
       applyPreviewDims();
+      updateJobSummary();
+      
+      
     });
 
   </script>
@@ -1272,6 +1440,7 @@
           <img src="assets/logo.png" alt="Printer Logo" />
           <span class="printer-title">Pictures Mail Console</span>
         </a>
+        
       </div>
 
       <div class="paper" role="document">
@@ -1365,16 +1534,42 @@
                   <option value="professional">Professional</option>
                 </select>
               </div>
+              <div class="tool"><label for="ctl-dpi">DPI</label>
+                <select id="ctl-dpi">
+                  <option value="150">150</option>
+                  <option value="300" selected>300</option>
+                  <option value="600">600</option>
+                </select>
+              </div>
+              <div class="tool"><label for="ctl-color-corr">Color Correction</label>
+                <select id="ctl-color-corr">
+                  <option value="auto" selected>Auto</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
               <div style="display:flex; gap:8px; margin-top:8px;">
                 <button type="button" class="button" onclick="openPrintPreview()"><i class="fas fa-print"></i> Print Preview</button>
               </div>
             </div>
             <div class="preview-wrap">
               <div id="paper-canvas" class="paper-canvas" aria-label="Paper preview">
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out" aria-label="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-btn" onclick="zoomIn()" title="Zoom In" aria-label="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom" aria-label="Reset Zoom">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
                 <div id="paper-inner" class="paper-inner"></div>
               </div>
             </div>
           </div>
+          <div id="job-summary" class="badge" style="margin-top:10px;">Items: -, Copies: 1, Total Prints: -</div>
           <div id="thumbs" class="thumbs" aria-label="PDF Thumbnails" style="display:none"></div>
         </div>
 
