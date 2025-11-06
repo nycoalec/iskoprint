@@ -34,7 +34,7 @@ class Auth {
             // Insert user
             $stmt = $this->db->prepare("
                 INSERT INTO users (first_name, last_name, email, password, phone_number, created_at) 
-                VALUES (?, ?, ?, ?, ?, NOW())
+                VALUES (?, ?, ?, ?, ?, UNIX_TIMESTAMP())
             ");
             
             $result = $stmt->execute([$firstName, $lastName, $email, $hashedPassword, $phoneNumber]);
