@@ -1625,6 +1625,16 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Book Bind Service',
+      'Focus: Users submit documents for thermal or soft binding with customizable print settings.',
+      'Features: Compose form to message admin, upload files (images/pdf/doc/txt) with preview.',
+      'Binding details: options for paper size, margins, scale, cover color, spine text hints, copies, and finishing notes.',
+      'Use this context to answer queries about binding timelines, requirements, and customization.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 

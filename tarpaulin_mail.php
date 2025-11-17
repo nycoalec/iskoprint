@@ -1500,6 +1500,16 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Tarpaulin Service',
+      'Purpose: large-format prints for events, announcements, and booths.',
+      'Inputs: dimensions (ft/m), resolution requirement, finishing (hem + grommets), quantity, rush flag.',
+      'Users can attach design files, specify bleed, include layout instructions, and request delivery/pickup.',
+      'Use this data when explaining tarpaulin pricing, lead times, or file guidelines.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 

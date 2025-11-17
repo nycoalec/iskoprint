@@ -1172,3 +1172,16 @@ $currentUser = $auth->getCurrentUser();
       // Option B: do not force any tab active state programmatically
     });
   </script>
+  <script>
+    window.__iskobotContext = [
+      'Page: Homepage',
+      'Services overview: Print, Book Bind, Laminate, Pictures, Photocopy, Tarpaulin.',
+      'Pricing table: Print from PHP 60, Book Bind from PHP 120, Lamination from PHP 40, Pictures from PHP 25, Photocopy from PHP 10, Tarpaulin from PHP 200.',
+      'How it works: Choose service, Upload files, Set options, Send & Pay.',
+      'Contact options: Facebook IskoPrintOfficial, Instagram @iskoprint_official, Telegram t.me/IskoPrintOfficial, phone +63 900 123 4567, email support@iskoprint.com, location PUP Sto. Tomas Campus.',
+      'Unique value: fast turnaround, secure handling, shop-grade quality, student pricing.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
+</body>
+</html>

@@ -1578,6 +1578,16 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Picture Printing Service',
+      'Capabilities: glossy or matte photo prints, collage layouts, add borders, adjust color correction.',
+      'Options: photo sizes (2x2, 3R, 4R, 5R, 8R, custom), paper type, finish, copies per image.',
+      'Users can upload multiple photos, preview thumbnails, and leave notes for retouching.',
+      'Answer questions about photo print pricing, turnaround, and finishing using this data.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 

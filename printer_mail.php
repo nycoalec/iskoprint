@@ -1753,6 +1753,17 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Printer Mail UI',
+      'Purpose: Accepts print jobs, lets users send message and files to admin inbox.',
+      'File upload accepts images, PDF, DOC, DOCX, TXT with live preview via PDF.js.',
+      'Controls include paper size (A4, Letter, Legal, A3), orientation, page range, pages per sheet, margins, scale, fit, duplex, color, copies, layout options.',
+      'Summary badge shows pages, sheets per copy, copies, total sheets.',
+      'Use this context to answer questions about document printing workflows and options.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 

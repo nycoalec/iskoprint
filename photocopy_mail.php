@@ -1538,6 +1538,16 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Photocopy Service',
+      'Function: quick black & white duplication of documents with adjustable density and reductions.',
+      'Controls: originals/pages count, paper size, duplex, scaling, darkness level, collation, stapling, copies.',
+      'Upload area allows PDFs and images for reference; summary highlights sheets needed.',
+      'Leverage this when answering questions about photocopy limits, speed, and options.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 

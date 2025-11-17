@@ -1507,6 +1507,16 @@
       </div>
     </div>
   </div>
+  <script>
+    window.__iskobotContext = [
+      'Page: Lamination Service',
+      'Use case: Seal IDs, cards, photos, certificates with protective film.',
+      'Options: size selector (ID, A6, A5, A4, custom), thickness (3mil/5mil), finish (gloss/matte), corner rounding, quantity.',
+      'Users upload reference images/PDFs and can leave lamination instructions.',
+      'IskoBot should lean on this context when answering lamination-specific questions.'
+    ].join('\\n');
+  </script>
+  <script src="assets/chatbot-widget.js"></script>
 </body>
 </html>
 
