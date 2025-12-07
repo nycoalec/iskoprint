@@ -729,18 +729,15 @@
 
           // Record order for billing with default pricing
           const DEFAULT_PRICES = { laminate: 40 };
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          const order = {
-            id: 'ORD-' + Date.now(),
-            serviceType: 'laminate',
-            subject: subject,
-            amount: DEFAULT_PRICES.laminate,
-            status: 'Unpaid',
-            createdAt: new Date().toISOString()
-          };
-          orders.push(order);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
+          fetch('api/orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: 'laminate',
+              subject: subject,
+              amount: DEFAULT_PRICES.laminate
+            })
+          }).catch(err => console.error('Error creating order:', err));
         } else {
           ticker.textContent = data.message;
         }

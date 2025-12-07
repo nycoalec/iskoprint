@@ -796,18 +796,15 @@
 
           // Record order for billing with default pricing
           const DEFAULT_PRICES = { bookbind: 120 };
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          const order = {
-            id: 'ORD-' + Date.now(),
-            serviceType: 'bookbind',
-            subject: subject,
-            amount: DEFAULT_PRICES.bookbind,
-            status: 'Unpaid',
-            createdAt: new Date().toISOString()
-          };
-          orders.push(order);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
+          fetch('api/orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: 'bookbind',
+              subject: subject,
+              amount: DEFAULT_PRICES.bookbind
+            })
+          }).catch(err => console.error('Error creating order:', err));
         } else {
           ticker.textContent = `Error: ${data.message}`;
           ticker.classList.remove('sending', 'sent');

@@ -833,18 +833,15 @@
 
           // Record order for billing with default pricing
           const DEFAULT_PRICES = { printer: 60 };
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          const order = {
-            id: 'ORD-' + Date.now(),
-            serviceType: 'printer',
-            subject: subject,
-            amount: DEFAULT_PRICES.printer,
-            status: 'Unpaid',
-            createdAt: new Date().toISOString()
-          };
-          orders.push(order);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
+          fetch('api/orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: 'printer',
+              subject: subject,
+              amount: DEFAULT_PRICES.printer
+            })
+          }).catch(err => console.error('Error creating order:', err));
         } else {
           ticker.textContent = `Error: ${data.message}`;
           ticker.classList.remove('sending', 'sent');

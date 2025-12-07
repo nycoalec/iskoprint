@@ -856,18 +856,15 @@
 
           // Record order for billing with default pricing
           const DEFAULT_PRICES = { tarpaulin: 200 };
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          const order = {
-            id: 'ORD-' + Date.now(),
-            serviceType: 'tarpaulin',
-            subject: subject,
-            amount: DEFAULT_PRICES.tarpaulin,
-            status: 'Unpaid',
-            createdAt: new Date().toISOString()
-          };
-          orders.push(order);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
+          fetch('api/orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: 'tarpaulin',
+              subject: subject,
+              amount: DEFAULT_PRICES.tarpaulin
+            })
+          }).catch(err => console.error('Error creating order:', err));
         } else {
           ticker.textContent = data.message;
         }

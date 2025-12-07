@@ -898,18 +898,15 @@
 
           // Record order for billing with default pricing
           const DEFAULT_PRICES = { photocopy: 10 };
-          const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-          const order = {
-            id: 'ORD-' + Date.now(),
-            serviceType: 'photocopy',
-            subject: subject,
-            amount: DEFAULT_PRICES.photocopy,
-            status: 'Unpaid',
-            createdAt: new Date().toISOString()
-          };
-          orders.push(order);
-          localStorage.setItem('orders', JSON.stringify(orders));
-          window.dispatchEvent(new StorageEvent('storage', { key: 'orders', newValue: JSON.stringify(orders) }));
+          fetch('api/orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: 'photocopy',
+              subject: subject,
+              amount: DEFAULT_PRICES.photocopy
+            })
+          }).catch(err => console.error('Error creating order:', err));
         } else {
           ticker.textContent = data.message;
         }

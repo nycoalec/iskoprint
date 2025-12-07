@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'config/paypal_config.php';
 $auth = new Auth();
 if (!$auth->isLoggedIn()) {
   header('Location: index.php');
@@ -7,6 +8,7 @@ if (!$auth->isLoggedIn()) {
 }
 $currentUser = $auth->getCurrentUser();
 $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['username'] ?? 'iskOPrint member', ENT_QUOTES, 'UTF-8');
+$paypalSDKUrl = getPayPalSDKUrl();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -363,7 +365,11 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
         </div>
         <div id="paypal-button" style="min-height:60px"></div>
         <p class="help-text">
-          Sandbox mode is enabled. Replace the client ID with your live credentials when deploying.
+          <?php if (PAYPAL_ENVIRONMENT === 'sandbox'): ?>
+            <strong>Sandbox mode is enabled.</strong> Using test credentials. Replace with live credentials in production.
+          <?php else: ?>
+            Production mode is enabled. Live payments are active.
+          <?php endif; ?>
         </p>
       </article>
 
@@ -388,38 +394,16 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
       </article>
     </section>
   </main>
-  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=PHP"></script>
+  <script src="<?= htmlspecialchars($paypalSDKUrl, ENT_QUOTES, 'UTF-8') ?>"></script>
   <script>
     const unpaidTotalEl = document.getElementById('unpaidTotal');
     const paypalTotalEl = document.getElementById('paypalTotal');
     const feedbackEl = document.getElementById('paymentFeedback');
     const paypalOverlayEl = document.getElementById('paypalOverlay');
 
-    const storageEventKey = 'orders';
     let lastPayPalAmount = 0;
-
-    const getOrders = () => JSON.parse(localStorage.getItem('orders') || '[]');
-
-    const getUnpaidOrders = (orders = getOrders()) =>
-      orders.filter(o => (o.status || '').toLowerCase() === 'unpaid');
-
-    const getUnpaidTotal = () =>
-      getUnpaidOrders().reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
-
-    const pushInvoice = (orders, amount, channel) => {
-      const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-      const invoice = {
-        id: 'INV-' + new Date().getFullYear() + '-' + String(invoices.length + 1).padStart(3, '0'),
-        issuedAt: new Date().toISOString(),
-        orders: orders.map(o => o.id),
-        amount,
-        paidVia: channel
-      };
-      invoices.push(invoice);
-      localStorage.setItem('invoices', JSON.stringify(invoices));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'invoices', newValue: JSON.stringify(invoices) }));
-      return invoice;
-    };
+    let unpaidOrders = [];
+    let paypalButtons = null;
 
     const setFeedback = (message, variant = 'success') => {
       if (!feedbackEl) return;
@@ -440,51 +424,76 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
       }
     };
 
-    const markUnpaidAsPaid = (channelLabel, options = {}) => {
-      const { removePaidRecords = false } = options;
-      const orders = getOrders();
-      const unpaid = getUnpaidOrders(orders);
-      if (!unpaid.length) {
-        return { amount: 0, invoice: null };
+    async function loadOrders() {
+      try {
+        const response = await fetch('api/orders.php');
+        const data = await response.json();
+        
+        if (data.success) {
+          unpaidOrders = (data.orders || []).filter(o => o.status === 'Unpaid');
+          refreshTotals();
+          updatePayPalButton();
+        }
+      } catch (error) {
+        console.error('Error loading orders:', error);
       }
-      const amount = unpaid.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
-      unpaid.forEach(order => {
-        order.status = 'Paid';
-        order.paidVia = channelLabel;
-        order.paidAt = new Date().toISOString();
-      });
-      const idsToRemove = new Set(removePaidRecords ? unpaid.map(order => order.id) : []);
-      const updatedOrders = removePaidRecords
-        ? orders.filter(order => !idsToRemove.has(order.id))
-        : orders;
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
-      window.dispatchEvent(new StorageEvent('storage', { key: storageEventKey, newValue: JSON.stringify(updatedOrders) }));
-      const invoice = pushInvoice(unpaid, amount, channelLabel);
-      refreshTotals();
-      return { amount, invoice };
-    };
-
-    function refreshTotals () {
-      const total = getUnpaidTotal();
-      const formatted = (total || 0).toFixed(2);
-      unpaidTotalEl.textContent = formatted;
-      paypalTotalEl.textContent = formatted;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      refreshTotals();
-      initPayPalButtons();
-    });
+    function refreshTotals() {
+      const total = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
+      const formatted = (total || 0).toFixed(2);
+      if (unpaidTotalEl) unpaidTotalEl.textContent = formatted;
+      if (paypalTotalEl) paypalTotalEl.textContent = formatted;
+    }
 
-    window.addEventListener('storage', (event) => {
-      if (event.key === storageEventKey) {
-        refreshTotals();
+    function updatePayPalButton() {
+      if (paypalButtons && window.paypal) {
+        const total = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
+        // Note: PayPal SDK doesn't allow re-enabling/disabling after init
+        // The button state will be checked in onClick
       }
-    });
+    }
 
-    function initPayPalButtons () {
-      if (!(window.paypal && document.getElementById('paypal-button'))) return;
-      paypal.Buttons({
+    async function markUnpaidAsPaid(transactionId, paidVia = 'PayPal') {
+      if (!unpaidOrders.length) {
+        return { amount: 0, success: false };
+      }
+      
+      const orderIds = unpaidOrders.map(o => o.id);
+      const amount = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
+      
+      try {
+        const response = await fetch('api/orders.php', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderIds: orderIds,
+            paidVia: paidVia,
+            transactionId: transactionId
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          await loadOrders(); // Reload orders to get updated status
+          return { amount, success: true };
+        } else {
+          return { amount: 0, success: false, message: data.message };
+        }
+      } catch (error) {
+        console.error('Error marking orders as paid:', error);
+        return { amount: 0, success: false, message: 'Database error' };
+      }
+    }
+
+    function initPayPalButtons() {
+      if (!(window.paypal && document.getElementById('paypal-button'))) {
+        // Retry after a short delay if PayPal SDK hasn't loaded
+        setTimeout(initPayPalButtons, 100);
+        return;
+      }
+      
+      paypalButtons = paypal.Buttons({
         fundingSource: paypal.FUNDING.PAYPAL,
         funding: {
           disallowed: [paypal.FUNDING.CARD, paypal.FUNDING.CREDIT, paypal.FUNDING.PAYLATER]
@@ -495,21 +504,16 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
           label: 'pay',
           height: 46
         },
-        onInit: (_, actions) => {
-          if (!getUnpaidTotal()) {
+        onInit: async (_, actions) => {
+          await loadOrders();
+          const total = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
+          if (!total) {
             actions.disable();
           }
-          window.addEventListener('storage', (event) => {
-            if (event.key && event.key !== storageEventKey) return;
-            if (!getUnpaidTotal()) {
-              actions.disable();
-            } else {
-              actions.enable();
-            }
-          });
         },
-        onClick: (data, actions) => {
-          const total = getUnpaidTotal();
+        onClick: async (data, actions) => {
+          await loadOrders();
+          const total = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
           if (!total) {
             setFeedback('No unpaid orders to charge with PayPal.', 'info');
             return actions.reject();
@@ -517,8 +521,9 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
           togglePayPalOverlay(true);
           return actions.resolve();
         },
-        createOrder: (_, actions) => {
-          const total = getUnpaidTotal();
+        createOrder: async (_, actions) => {
+          await loadOrders();
+          const total = unpaidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
           if (!total) {
             togglePayPalOverlay(false);
             return Promise.reject(new Error('No unpaid orders'));
@@ -534,13 +539,25 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
             }]
           });
         },
-        onApprove: (data, actions) => actions.order.capture().then(details => {
-          const { amount, invoice } = markUnpaidAsPaid('PayPal', { removePaidRecords: true });
-          const paidAmount = amount || lastPayPalAmount;
-          const reference = details.id || data.orderID;
-          setFeedback(`Paid ₱${paidAmount.toFixed(2)} via PayPal (Txn ${reference}). Invoice ${invoice.id} saved.`, 'success');
-          togglePayPalOverlay(false);
-        }),
+        onApprove: async (data, actions) => {
+          try {
+            const details = await actions.order.capture();
+            const transactionId = details.id || data.orderID;
+            const result = await markUnpaidAsPaid(transactionId, 'PayPal');
+            
+            if (result.success) {
+              const paidAmount = result.amount || lastPayPalAmount;
+              setFeedback(`Paid ₱${paidAmount.toFixed(2)} via PayPal (Txn ${transactionId}). Orders marked as paid.`, 'success');
+            } else {
+              setFeedback('Payment received but failed to update orders. Please contact support.', 'error');
+            }
+            togglePayPalOverlay(false);
+          } catch (error) {
+            console.error('PayPal capture error:', error);
+            setFeedback('Payment processing error. Please contact support.', 'error');
+            togglePayPalOverlay(false);
+          }
+        },
         onCancel: () => {
           togglePayPalOverlay(false);
           setFeedback('PayPal checkout was cancelled.', 'info');
@@ -552,6 +569,12 @@ $displayName = htmlspecialchars($currentUser['full_name'] ?? $currentUser['usern
         }
       }).render('#paypal-button');
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadOrders();
+      initPayPalButtons();
+    });
   </script>
 </body>
 </html>
+

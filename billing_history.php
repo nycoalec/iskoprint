@@ -69,68 +69,112 @@ if (!$auth->isLoggedIn()) { header('Location: index.php'); exit; }
 
     function formatAmount(n){ return (Number(n)||0).toFixed(2); }
 
-    function loadOrders(){
+    async function loadOrders(){
       const container = document.getElementById('orders');
-      container.innerHTML = '';
-      const orders = JSON.parse(localStorage.getItem('orders')||'[]').sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
-      let unpaid = 0;
-      orders.forEach(o=>{
-        if (o.status === 'Unpaid') unpaid += Number(o.amount)||0;
-        const row = document.createElement('div');
-        row.className = 'row';
-        row.innerHTML = `
-          <div>${o.id}</div>
-          <div>[${SERVICE_NAMES[o.serviceType]||o.serviceType}] ${o.subject||''}<div class="status ${o.status}" style="margin-top:6px">${o.status}</div></div>
-          <div>₱${formatAmount(o.amount)}</div>
-          <div>${o.status==='Unpaid' ? `<button class=\"btn\" onclick=\"markPaid('${o.id}')\">Mark as Paid</button>` : '<span style="color:#666">—</span>'}</div>
-        `;
-        container.appendChild(row);
-      });
-      document.getElementById('unpaidTotal').textContent = formatAmount(unpaid);
+      container.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Loading orders...</div>';
+      
+      try {
+        const response = await fetch('api/orders.php');
+        const data = await response.json();
+        
+        if (!data.success) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:#d00">Error loading orders</div>';
+          return;
+        }
+        
+        const orders = data.orders || [];
+        container.innerHTML = '';
+        let unpaid = 0;
+        
+        orders.forEach(o=>{
+          if (o.status === 'Unpaid') unpaid += Number(o.amount)||0;
+          const row = document.createElement('div');
+          row.className = 'row';
+          const statusHtml = o.status === 'Paid' && o.paidVia 
+            ? `<div class="status ${o.status}" style="margin-top:6px">${o.status} via ${o.paidVia}</div>`
+            : `<div class="status ${o.status}" style="margin-top:6px">${o.status}</div>`;
+          row.innerHTML = `
+            <div>${o.id}</div>
+            <div>[${SERVICE_NAMES[o.serviceType]||o.serviceType}] ${o.subject||''}${statusHtml}</div>
+            <div>₱${formatAmount(o.amount)}</div>
+            <div>${o.status==='Unpaid' ? `<button class="btn" onclick="markPaid('${o.id}')">Mark as Paid</button>` : '<span style="color:#666">—</span>'}</div>
+          `;
+          container.appendChild(row);
+        });
+        
+        if (orders.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:#666">No orders found</div>';
+        }
+        
+        document.getElementById('unpaidTotal').textContent = formatAmount(unpaid);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#d00">Error loading orders. Please refresh the page.</div>';
+      }
     }
 
-    function markPaid(orderId){
-      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
-      const order = orders.find(o=>o.id===orderId);
-      if (!order) return;
-      order.status = 'Paid';
-      localStorage.setItem('orders', JSON.stringify(orders));
-      // create invoice
-      const invoices = JSON.parse(localStorage.getItem('invoices')||'[]');
-      const invoice = {
-        id: 'INV-' + new Date().getFullYear() + '-' + String(invoices.length+1).padStart(3,'0'),
-        issuedAt: new Date().toISOString(),
-        orders: [order.id],
-        amount: Number(order.amount)||0
-      };
-      invoices.push(invoice);
-      localStorage.setItem('invoices', JSON.stringify(invoices));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'invoices', newValue: JSON.stringify(invoices) }));
-      loadOrders();
+    async function markPaid(orderId){
+      try {
+        const response = await fetch('api/orders.php', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderIds: [orderId],
+            paidVia: 'Manual'
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          loadOrders();
+        } else {
+          alert('Error: ' + (data.message || 'Failed to mark order as paid'));
+        }
+      } catch (error) {
+        console.error('Error marking order as paid:', error);
+        alert('Error marking order as paid. Please try again.');
+      }
     }
 
-    function payAllUnpaid(){
-      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
-      const unpaid = orders.filter(o=>o.status==='Unpaid');
-      if (unpaid.length===0) return;
-      const amount = unpaid.reduce((s,o)=> s + (Number(o.amount)||0), 0);
-      unpaid.forEach(o=> o.status='Paid');
-      localStorage.setItem('orders', JSON.stringify(orders));
-      const invoices = JSON.parse(localStorage.getItem('invoices')||'[]');
-      const invoice = {
-        id: 'INV-' + new Date().getFullYear() + '-' + String(invoices.length+1).padStart(3,'0'),
-        issuedAt: new Date().toISOString(),
-        orders: unpaid.map(o=>o.id),
-        amount
-      };
-      invoices.push(invoice);
-      localStorage.setItem('invoices', JSON.stringify(invoices));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'invoices', newValue: JSON.stringify(invoices) }));
-      loadOrders();
+    async function payAllUnpaid(){
+      try {
+        const response = await fetch('api/orders.php');
+        const data = await response.json();
+        
+        if (!data.success) {
+          alert('Error loading orders');
+          return;
+        }
+        
+        const unpaid = (data.orders || []).filter(o=>o.status==='Unpaid');
+        if (unpaid.length===0) {
+          alert('No unpaid orders');
+          return;
+        }
+        
+        const orderIds = unpaid.map(o=>o.id);
+        const updateResponse = await fetch('api/orders.php', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderIds: orderIds,
+            paidVia: 'Manual'
+          })
+        });
+        
+        const updateData = await updateResponse.json();
+        if (updateData.success) {
+          loadOrders();
+        } else {
+          alert('Error: ' + (updateData.message || 'Failed to mark orders as paid'));
+        }
+      } catch (error) {
+        console.error('Error paying all unpaid:', error);
+        alert('Error processing payment. Please try again.');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', loadOrders);
-    window.addEventListener('storage', (e)=>{ if (e.key==='orders') loadOrders(); });
   </script>
 </body>
 </html>
